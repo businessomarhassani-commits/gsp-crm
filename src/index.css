@@ -37,13 +37,14 @@ body {
 #root { min-height: 100vh; }
 
 /* ─── Dark Mode ──────────────────────────────────── */
-.dark {
-  background-color: #080b12;
-  color: #e2e8f0;
-}
-:not(.dark) {
+/* Scope background/color to root elements only — never all elements globally */
+html, body, #root {
   background-color: #f8fafc;
   color: #0f172a;
+}
+html.dark, html.dark body, html.dark #root {
+  background-color: #080b12;
+  color: #e2e8f0;
 }
 
 /* ─── Glass Components ───────────────────────────── */
