@@ -99,15 +99,15 @@ ${script.cta}
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader title="Creative Studio" subtitle="AI video ad scripts + Higgsfield.ai workflow" />
 
       {/* Brief + Script */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Brief Form */}
-        <GlassCard className="p-5">
-          <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Ad Brief</h3>
-          <div className="space-y-3">
+        <GlassCard className="p-7">
+          <h3 className={`text-base font-semibold mb-5 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Ad Brief</h3>
+          <div className="space-y-4">
             <FormSelect label="Niche" value={form.niche_id} onChange={e => setForm(f => ({ ...f, niche_id: e.target.value }))}>
               <option value="">Select niche…</option>
               {niches?.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -133,9 +133,9 @@ ${script.cta}
         </GlassCard>
 
         {/* Script Output */}
-        <GlassCard className="p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-semibold ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Generated Script</h3>
+        <GlassCard className="p-7 flex flex-col">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className={`text-base font-semibold ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Generated Script</h3>
             {script && (
               <div className="flex gap-2">
                 <Button variant="purple" size="xs" icon={ExternalLink} onClick={handleOpenHiggsfield}>
@@ -190,15 +190,15 @@ ${script.cta}
 
       {/* Creative Library */}
       <div>
-        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white/70' : 'text-slate-600'}`}>Creative Library</h3>
+        <h3 className={`text-base font-semibold mb-4 ${isDark ? 'text-white/70' : 'text-slate-600'}`}>Creative Library</h3>
         {!creatives?.length ? (
           <GlassCard>
             <EmptyState icon={Film} title="No creatives yet" message="Generate a script and save it to build your creative library." />
           </GlassCard>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {creatives.map(c => (
-              <GlassCard key={c.id} className="p-4">
+              <GlassCard key={c.id} className="p-6">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex flex-wrap gap-1.5">
                     {c.niches && <NicheBadge niche={c.niches} size="xs" />}

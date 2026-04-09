@@ -33,15 +33,15 @@ function TaskRow({ task, onComplete, onDelete, navigate }) {
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 8 }}
-      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${isDark ? 'hover:bg-white/4' : 'hover:bg-black/3'}`}
+      className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${isDark ? 'hover:bg-white/4' : 'hover:bg-black/3'}`}
     >
       <button
         onClick={() => onComplete(task.id)}
-        className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-110 ${
+        className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-110 ${
           isDark ? 'border-white/15 hover:border-green-500/60 hover:bg-green-500/15' : 'border-black/12 hover:border-green-400 hover:bg-green-50'
         }`}
       >
-        <CheckCircle2 size={14} className={isDark ? 'text-white/20' : 'text-slate-300'} />
+        <CheckCircle2 size={15} className={isDark ? 'text-white/20' : 'text-slate-300'} />
       </button>
 
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => task.prospect_id && navigate(`/prospects/${task.prospect_id}`)}>
@@ -102,9 +102,9 @@ export default function Tasks() {
     const colors = { red: 'text-red-400 bg-red-400/10', amber: 'text-amber-400 bg-amber-400/10', blue: 'text-blue-400 bg-blue-400/10', slate: 'text-slate-400 bg-slate-400/10' }
     return (
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className={`text-sm font-semibold ${isDark ? 'text-white/70' : 'text-slate-600'}`}>{title}</h3>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colors[badgeColor]}`}>{tasks.length}</span>
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className={`text-base font-semibold ${isDark ? 'text-white/70' : 'text-slate-600'}`}>{title}</h3>
+          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${colors[badgeColor]}`}>{tasks.length}</span>
         </div>
         <GlassCard className="p-2">
           {tasks.map(t => (
@@ -116,7 +116,7 @@ export default function Tasks() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader
         title="Tasks"
         subtitle={`${pendingTasks?.length || 0} pending · ${overdue.length} overdue`}
@@ -133,7 +133,7 @@ export default function Tasks() {
           />
         </GlassCard>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-8">
           <Section title="Overdue" tasks={overdue} badgeColor="red" />
           <Section title="Today" tasks={todayTasks} badgeColor="amber" />
           <Section title="Next 7 Days" tasks={upcoming} badgeColor="blue" />

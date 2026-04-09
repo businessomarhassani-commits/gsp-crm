@@ -32,20 +32,20 @@ export function TopBar() {
   const bg = isDark ? 'bg-dark-bg/80 backdrop-blur-xl' : 'bg-light-bg/90 backdrop-blur-xl'
 
   return (
-    <header className={`h-14 border-b ${borderColor} ${bg} flex items-center justify-between px-5 sticky top-0 z-30`}>
+    <header className={`h-16 border-b ${borderColor} ${bg} flex items-center justify-between px-7 sticky top-0 z-30`}>
       <div>
-        <h2 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{meta.title}</h2>
-        {meta.subtitle && <p className={`text-xs ${isDark ? 'text-white/35' : 'text-slate-400'} hidden sm:block`}>{meta.subtitle}</p>}
+        <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{meta.title}</h2>
+        {meta.subtitle && <p className={`text-xs mt-0.5 ${isDark ? 'text-white/35' : 'text-slate-400'} hidden sm:block`}>{meta.subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {/* Currency toggle */}
-        <div className={`flex items-center gap-0.5 rounded-lg p-0.5 ${isDark ? 'bg-white/6' : 'bg-black/5'}`}>
+        <div className={`flex items-center gap-0.5 rounded-xl p-1 ${isDark ? 'bg-white/6' : 'bg-black/5'}`}>
           {['MAD', 'USD', 'EUR'].map((c) => (
             <button
               key={c}
               onClick={() => setActiveCurrency(c)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 activeCurrency === c
                   ? (isDark ? 'bg-white/15 text-white' : 'bg-white text-slate-800 shadow-sm')
                   : (isDark ? 'text-white/40 hover:text-white/70' : 'text-slate-400 hover:text-slate-600')

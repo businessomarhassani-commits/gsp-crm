@@ -29,7 +29,7 @@ export default function Clients() {
   if (isLoading) return <PageLoader />
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader
         title="Clients"
         subtitle={`${clients?.length || 0} active clients · MRR: ${formatAmount(totalMRR)}`}
@@ -50,7 +50,7 @@ export default function Clients() {
               <thead>
                 <tr className={`border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
                   {['Client','Service','Monthly Fee','Contract','Started','Status',''].map(h => (
-                    <th key={h} className={`text-xs font-medium text-left px-4 py-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
+                    <th key={h} className={`text-xs font-medium text-left px-5 py-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -64,25 +64,25 @@ export default function Clients() {
                   return (
                     <tr key={c.id} className={`border-b table-row-hover cursor-pointer ${isDark ? 'border-white/4' : 'border-black/4'}`}
                       onClick={() => navigate(`/clients/${c.id}`)}>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <p className={`font-medium ${isDark ? 'text-white/90' : 'text-slate-800'}`}>{prospect?.full_name}</p>
                         {prospect?.business_name && <p className={`text-xs ${isDark ? 'text-white/40' : 'text-slate-400'}`}>{prospect.business_name}</p>}
                       </td>
-                      <td className={`px-4 py-3 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>{c.service_type || '—'}</td>
-                      <td className="px-4 py-3">
+                      <td className={`px-5 py-4 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>{c.service_type || '—'}</td>
+                      <td className="px-5 py-4">
                         <span className={`font-semibold ${isDark ? 'text-white/85' : 'text-slate-800'}`}>{formatAmount(c.monthly_fee, c.fee_currency)}</span>
                         <span className={`text-xs ml-1 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>/mo</span>
                       </td>
-                      <td className={`px-4 py-3 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>{c.contract_months || '—'} mo</td>
-                      <td className={`px-4 py-3 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>
+                      <td className={`px-5 py-4 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>{c.contract_months || '—'} mo</td>
+                      <td className={`px-5 py-4 ${isDark ? 'text-white/55' : 'text-slate-500'}`}>
                         {c.contract_start ? format(new Date(c.contract_start), 'MMM d, yyyy') : '—'}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isActive ? 'text-emerald-400 bg-emerald-400/10' : 'text-slate-400 bg-slate-400/10'}`}>
                           {isActive ? 'Active' : 'Ended'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
                           <button onClick={() => navigate(`/clients/${c.id}`)}
                             className={`p-1.5 rounded-lg cursor-pointer ${isDark ? 'hover:bg-white/8 text-white/30' : 'hover:bg-black/6 text-slate-300'}`}>

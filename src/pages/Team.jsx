@@ -58,7 +58,7 @@ export default function Team() {
   if (isLoading) return <PageLoader />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Team"
         subtitle={`${(members?.length || 0) + 1} members`}
@@ -67,10 +67,10 @@ export default function Team() {
 
       {/* Current Team */}
       <GlassCard className="overflow-hidden">
-        <div className={`px-5 py-3 border-b text-xs font-medium uppercase tracking-wider ${isDark ? 'border-white/6 text-white/35' : 'border-black/6 text-slate-400'}`}>Members</div>
+        <div className={`px-6 py-4 border-b text-xs font-medium uppercase tracking-wider ${isDark ? 'border-white/6 text-white/35' : 'border-black/6 text-slate-400'}`}>Members</div>
 
         {/* Owner row */}
-        <div className={`flex items-center gap-4 px-5 py-4 border-b ${isDark ? 'border-white/4' : 'border-black/4'}`}>
+        <div className={`flex items-center gap-4 px-6 py-5 border-b ${isDark ? 'border-white/4' : 'border-black/4'}`}>
           <Avatar name={profile?.full_name || profile?.email} size="md" />
           <div className="flex-1 min-w-0">
             <p className={`text-sm font-medium ${isDark ? 'text-white/90' : 'text-slate-800'}`}>{profile?.full_name || 'You'}</p>
@@ -86,7 +86,7 @@ export default function Team() {
             const RoleIcon = ROLE_ICONS[m.role] || Eye
             const roleColor = ROLE_COLORS[m.role] || '#94a3b8'
             return (
-              <div key={m.id} className={`flex items-center gap-4 px-5 py-4 border-b table-row-hover ${isDark ? 'border-white/4' : 'border-black/4'}`}>
+              <div key={m.id} className={`flex items-center gap-4 px-6 py-5 border-b table-row-hover ${isDark ? 'border-white/4' : 'border-black/4'}`}>
                 <Avatar name={m.profiles?.full_name || m.email} size="md" />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${isDark ? 'text-white/85' : 'text-slate-700'}`}>{m.profiles?.full_name || m.email}</p>
@@ -114,8 +114,8 @@ export default function Team() {
       </GlassCard>
 
       {/* Permission Matrix */}
-      <GlassCard className="p-5">
-        <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Role Permissions</h3>
+      <GlassCard className="p-7">
+        <h3 className={`text-base font-semibold mb-5 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Role Permissions</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>

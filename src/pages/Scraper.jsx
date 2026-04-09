@@ -161,7 +161,7 @@ export default function Scraper() {
   const cols = COLS[source]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader title="Data Scraper" subtitle="Find and import prospects from multiple sources" />
 
       {/* Source Tabs */}
@@ -179,8 +179,8 @@ export default function Scraper() {
       </div>
 
       {/* Search Form */}
-      <GlassCard className="p-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <GlassCard className="p-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Input label="Search Keyword" placeholder="e.g. Restaurant, Dentiste, Gym" value={keyword} onChange={e => setKeyword(e.target.value)} icon={Search} />
           <Input label="City" placeholder="e.g. Casablanca" value={city} onChange={e => setCity(e.target.value)} icon={MapPin} />
           <FormSelect label="Niche (optional)" value={nicheId} onChange={e => setNicheId(e.target.value)}>
@@ -201,6 +201,7 @@ export default function Scraper() {
           Scrape {SOURCE_TABS.find(s => s.value === source)?.label}
         </Button>
       </GlassCard>
+
 
       {/* Results */}
       <AnimatePresence>
@@ -225,7 +226,7 @@ export default function Scraper() {
         {!loading && results.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <GlassCard className="overflow-hidden">
-              <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
+              <div className={`flex items-center justify-between px-5 py-4 border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
                 <div className="flex items-center gap-3">
                   <button onClick={toggleAll} className="cursor-pointer">
                     {selected.size === results.length
@@ -251,9 +252,9 @@ export default function Scraper() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className={`border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
-                      <th className="w-10 px-4 py-3" />
+                      <th className="w-10 px-5 py-4" />
                       {cols.map(c => (
-                        <th key={c.key} className={`text-xs font-medium text-left px-3 py-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{c.label}</th>
+                        <th key={c.key} className={`text-xs font-medium text-left px-4 py-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{c.label}</th>
                       ))}
                     </tr>
                   </thead>
@@ -262,13 +263,13 @@ export default function Scraper() {
                       <tr key={row.id}
                         className={`border-b table-row-hover cursor-pointer ${isDark ? 'border-white/4' : 'border-black/4'} ${selected.has(row.id) ? (isDark ? 'bg-blue-500/8' : 'bg-blue-50/50') : ''}`}
                         onClick={() => toggleSelect(row.id)}>
-                        <td className="px-4 py-3">
+                        <td className="px-5 py-4">
                           {selected.has(row.id)
                             ? <CheckSquare size={14} className="text-blue-400" />
                             : <Square size={14} className={isDark ? 'text-white/20' : 'text-slate-300'} />}
                         </td>
                         {cols.map(c => (
-                          <td key={c.key} className={`px-3 py-3 text-xs max-w-[160px] truncate ${isDark ? 'text-white/65' : 'text-slate-600'}`}>
+                          <td key={c.key} className={`px-4 py-4 text-xs max-w-[160px] truncate ${isDark ? 'text-white/65' : 'text-slate-600'}`}>
                             {c.render ? c.render(row) : (row[c.key] || '—')}
                           </td>
                         ))}

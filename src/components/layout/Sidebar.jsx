@@ -42,14 +42,14 @@ export function Sidebar() {
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 64 : 220 }}
+      animate={{ width: collapsed ? 72 : 260 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       className={`fixed left-0 top-0 h-screen z-40 border-r ${borderColor} ${bg} flex flex-col shrink-0 overflow-hidden`}
     >
       {/* Logo */}
-      <div className={`flex items-center gap-3 px-4 py-4 border-b ${borderColor}`}>
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
-          <Zap size={14} className="text-white" />
+      <div className={`flex items-center gap-3 px-5 py-5 border-b ${borderColor}`}>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+          <Zap size={17} className="text-white" />
         </div>
         <AnimatePresence>
           {!collapsed && (
@@ -58,7 +58,7 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15 }}
-              className={`font-bold text-base tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}
+              className={`font-bold text-[15px] tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}
             >
               SuccessPro
             </motion.span>
@@ -67,13 +67,13 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
         {NAV.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) => `
-              flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-medium
+              flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 relative group cursor-pointer
               ${isActive
                 ? (isDark ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-blue-600')
@@ -83,7 +83,7 @@ export function Sidebar() {
           >
             {({ isActive }) => (
               <>
-                <Icon size={16} className={`shrink-0 ${isActive ? (isDark ? 'text-blue-400' : 'text-blue-600') : ''}`} />
+                <Icon size={17} className={`shrink-0 ${isActive ? (isDark ? 'text-blue-400' : 'text-blue-600') : ''}`} />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
@@ -99,7 +99,7 @@ export function Sidebar() {
                 </AnimatePresence>
                 {/* Tasks badge */}
                 {to === '/tasks' && overdueTasks > 0 && (
-                  <span className={`ml-auto shrink-0 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center ${collapsed ? 'absolute top-1 right-1 min-w-[14px] h-[14px] text-[10px]' : ''}`}>
+                  <span className={`ml-auto shrink-0 min-w-[20px] h-[20px] rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center ${collapsed ? 'absolute top-1 right-1 min-w-[14px] h-[14px] text-[10px]' : ''}`}>
                     {overdueTasks > 9 ? '9+' : overdueTasks}
                   </span>
                 )}
@@ -116,13 +116,13 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom section */}
-      <div className={`border-t ${borderColor} px-2 py-3 space-y-1`}>
+      <div className={`border-t ${borderColor} px-3 py-4 space-y-1.5`}>
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl w-full text-sm font-medium transition-all duration-150 cursor-pointer ${isDark ? `text-white/50 hover:bg-white/6 hover:text-white` : `text-slate-500 hover:bg-black/4 hover:text-slate-800`}`}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-sm font-medium transition-all duration-150 cursor-pointer ${isDark ? `text-white/50 hover:bg-white/6 hover:text-white` : `text-slate-500 hover:bg-black/4 hover:text-slate-800`}`}
         >
-          {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
           <AnimatePresence>
             {!collapsed && (
               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
@@ -135,13 +135,13 @@ export function Sidebar() {
         {/* User profile */}
         <button
           onClick={() => navigate('/settings')}
-          className={`flex items-center gap-3 px-2 py-2 rounded-xl w-full transition-all duration-150 cursor-pointer ${isDark ? 'hover:bg-white/6' : 'hover:bg-black/4'}`}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full transition-all duration-150 cursor-pointer ${isDark ? 'hover:bg-white/6' : 'hover:bg-black/4'}`}
         >
           <Avatar name={profile?.full_name || profile?.email} size="sm" />
           <AnimatePresence>
             {!collapsed && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="text-left min-w-0">
-                <p className={`text-xs font-medium truncate ${isDark ? 'text-white/80' : 'text-slate-700'}`}>{profile?.full_name || 'Account'}</p>
+                <p className={`text-sm font-medium truncate ${isDark ? 'text-white/80' : 'text-slate-700'}`}>{profile?.full_name || 'Account'}</p>
                 <p className={`text-xs truncate ${textMuted}`}>{profile?.role || 'owner'}</p>
               </motion.div>
             )}
@@ -151,9 +151,9 @@ export function Sidebar() {
         {/* Sign out */}
         <button
           onClick={signOut}
-          className={`flex items-center gap-3 px-2.5 py-2 rounded-xl w-full text-sm transition-all duration-150 cursor-pointer ${isDark ? 'text-white/30 hover:bg-red-500/10 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-500'}`}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-sm transition-all duration-150 cursor-pointer ${isDark ? 'text-white/30 hover:bg-red-500/10 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-500'}`}
         >
-          <LogOut size={14} />
+          <LogOut size={15} />
           <AnimatePresence>
             {!collapsed && (
               <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>Sign out</motion.span>
@@ -165,7 +165,7 @@ export function Sidebar() {
       {/* Collapse toggle */}
       <button
         onClick={toggleSidebar}
-        className={`absolute -right-3 top-20 w-6 h-6 rounded-full border flex items-center justify-center z-50 cursor-pointer transition-colors ${isDark ? 'bg-dark-surface border-white/10 text-white/50 hover:text-white' : 'bg-white border-black/10 text-slate-400 hover:text-slate-700 shadow-sm'}`}
+        className={`absolute -right-3 top-24 w-6 h-6 rounded-full border flex items-center justify-center z-50 cursor-pointer transition-colors ${isDark ? 'bg-dark-surface border-white/10 text-white/50 hover:text-white' : 'bg-white border-black/10 text-slate-400 hover:text-slate-700 shadow-sm'}`}
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>

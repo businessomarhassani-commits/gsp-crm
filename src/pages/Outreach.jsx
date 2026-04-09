@@ -37,21 +37,21 @@ export default function Outreach() {
   }))
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader title="Outreach" subtitle={`${logs?.length || 0} total interactions logged`} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {stats.map(s => {
           const Icon = ICONS[s.value] || Megaphone
           const color = COLORS[s.value] || '#3b82f6'
           return (
-            <GlassCard key={s.value} className="p-4 text-center">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2" style={{ background: color + '20' }}>
-                <Icon size={16} style={{ color }} />
+            <GlassCard key={s.value} className="p-6 text-center">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: color + '20' }}>
+                <Icon size={18} style={{ color }} />
               </div>
-              <p className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.count}</p>
-              <p className={`text-xs mt-0.5 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>{s.label.split(' ')[0]}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{s.count}</p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>{s.label.split(' ')[0]}</p>
             </GlassCard>
           )
         })}
@@ -85,7 +85,7 @@ export default function Outreach() {
               <thead>
                 <tr className={`border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
                   {['Prospect','Type','Date','Outcome','Notes','By'].map(h => (
-                    <th key={h} className={`text-xs font-medium text-left px-4 py-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
+                    <th key={h} className={`text-xs font-medium text-left px-5 py-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -95,20 +95,20 @@ export default function Outreach() {
                   const color = COLORS[l.type] || '#3b82f6'
                   return (
                     <tr key={l.id} className={`border-b table-row-hover ${isDark ? 'border-white/4' : 'border-black/4'}`}>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <p className={`font-medium ${isDark ? 'text-white/85' : 'text-slate-700'}`}>{l.prospects?.full_name || '—'}</p>
                         {l.prospects?.business_name && <p className={`text-xs ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{l.prospects.business_name}</p>}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5">
                           <Icon size={13} style={{ color }} />
                           <span className="text-xs font-medium" style={{ color }}>{OUTREACH_TYPES.find(t => t.value === l.type)?.label}</span>
                         </div>
                       </td>
-                      <td className={`px-4 py-3 text-xs ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{format(new Date(l.date), 'MMM d, yyyy')}</td>
-                      <td className={`px-4 py-3 text-xs ${isDark ? 'text-white/55' : 'text-slate-600'}`}>{l.outcome || '—'}</td>
-                      <td className={`px-4 py-3 text-xs max-w-[200px] truncate ${isDark ? 'text-white/45' : 'text-slate-500'}`}>{l.notes || '—'}</td>
-                      <td className={`px-4 py-3 text-xs ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{l.profiles?.full_name || 'You'}</td>
+                      <td className={`px-5 py-4 text-xs ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{format(new Date(l.date), 'MMM d, yyyy')}</td>
+                      <td className={`px-5 py-4 text-xs ${isDark ? 'text-white/55' : 'text-slate-600'}`}>{l.outcome || '—'}</td>
+                      <td className={`px-5 py-4 text-xs max-w-[200px] truncate ${isDark ? 'text-white/45' : 'text-slate-500'}`}>{l.notes || '—'}</td>
+                      <td className={`px-5 py-4 text-xs ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{l.profiles?.full_name || 'You'}</td>
                     </tr>
                   )
                 })}

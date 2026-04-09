@@ -14,11 +14,11 @@ export function AppLayout() {
       <Sidebar />
       <motion.div
         className="flex-1 flex flex-col min-w-0 relative z-10"
-        animate={{ marginLeft: sidebarCollapsed ? 64 : 220 }}
+        animate={{ marginLeft: sidebarCollapsed ? 72 : 260 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       >
         <TopBar />
-        <main className="flex-1 p-5 sm:p-6 overflow-x-hidden">
+        <main className="flex-1 p-6 sm:p-8 lg:p-10 overflow-x-hidden">
           <Outlet />
         </main>
       </motion.div>

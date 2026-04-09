@@ -57,7 +57,7 @@ export default function ClientDetail() {
   const getPayment = (month, year) => payments?.find(p => p.month === month && p.year === year)
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-8 max-w-4xl">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/clients')} className={`p-2 rounded-xl cursor-pointer ${isDark ? 'hover:bg-white/8 text-white/50' : 'hover:bg-black/6 text-slate-400'}`}>
           <ArrowLeft size={18} />
@@ -71,10 +71,10 @@ export default function ClientDetail() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contract Info */}
-        <GlassCard className="p-4">
-          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Contract</h3>
+        <GlassCard className="p-6">
+          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-5 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Contract</h3>
 
           {editMode ? (
             <form onSubmit={handleSubmit(vals => { updateClient({ id, ...vals }); setEditMode(false) })} className="space-y-3">
@@ -107,13 +107,13 @@ export default function ClientDetail() {
 
         {/* Payment Calendar */}
         <div className="lg:col-span-2">
-          <GlassCard className="p-4">
-            <div className="flex items-center justify-between mb-4">
+          <GlassCard className="p-6">
+            <div className="flex items-center justify-between mb-5">
               <h3 className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Payment History</h3>
               <Button size="xs" icon={Plus} onClick={() => setPayModal(true)}>Add Payment</Button>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {months.map(({ month, year, label }) => {
                 const pay = getPayment(month, year)
                 const status = pay?.status || (new Date(year, month - 1) < new Date() ? 'overdue' : 'pending')

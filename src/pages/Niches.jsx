@@ -83,7 +83,7 @@ export default function Niches() {
   if (isLoading) return <PageLoader />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Niches"
         subtitle={`${niches?.length || 0} target markets defined`}
@@ -100,38 +100,38 @@ export default function Niches() {
           />
         </GlassCard>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {niches.map((niche, idx) => (
             <motion.div key={niche.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <GlassCard animate={false} className="p-5 glass-hover" hover>
+              <GlassCard animate={false} className="p-7 glass-hover" hover>
                 {/* Color bar */}
-                <div className="h-1 rounded-full mb-4" style={{ background: niche.color }} />
+                <div className="h-1.5 rounded-full mb-5" style={{ background: niche.color }} />
 
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{niche.name}</h3>
+                    <h3 className={`font-semibold text-base ${isDark ? 'text-white' : 'text-slate-800'}`}>{niche.name}</h3>
                     {(niche.target_city || niche.target_country) && (
-                      <p className={`text-xs mt-0.5 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-white/40' : 'text-slate-400'}`}>
                         {[niche.target_city, niche.target_country].filter(Boolean).join(', ')}
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => setEditNiche(niche)} className={`p-1.5 rounded-lg cursor-pointer transition-colors ${isDark ? 'hover:bg-white/8 text-white/40 hover:text-white' : 'hover:bg-black/6 text-slate-400 hover:text-slate-700'}`}>
-                      <Edit2 size={13} />
+                  <div className="flex gap-1.5">
+                    <button onClick={() => setEditNiche(niche)} className={`p-2 rounded-lg cursor-pointer transition-colors ${isDark ? 'hover:bg-white/8 text-white/40 hover:text-white' : 'hover:bg-black/6 text-slate-400 hover:text-slate-700'}`}>
+                      <Edit2 size={14} />
                     </button>
-                    <button onClick={() => setDeleteId(niche.id)} className={`p-1.5 rounded-lg cursor-pointer transition-colors ${isDark ? 'hover:bg-red-500/15 text-white/30 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-400'}`}>
-                      <Trash2 size={13} />
+                    <button onClick={() => setDeleteId(niche.id)} className={`p-2 rounded-lg cursor-pointer transition-colors ${isDark ? 'hover:bg-red-500/15 text-white/30 hover:text-red-400' : 'hover:bg-red-50 text-slate-300 hover:text-red-400'}`}>
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
 
                 {niche.description && (
-                  <p className={`text-xs mb-3 line-clamp-2 ${isDark ? 'text-white/45' : 'text-slate-500'}`}>{niche.description}</p>
+                  <p className={`text-sm mb-4 line-clamp-2 ${isDark ? 'text-white/45' : 'text-slate-500'}`}>{niche.description}</p>
                 )}
 
                 {(niche.budget_min || niche.budget_max) && (
-                  <div className={`text-xs px-2.5 py-1.5 rounded-lg inline-block ${isDark ? 'bg-white/6' : 'bg-black/5'}`}>
+                  <div className={`text-xs px-3 py-2 rounded-lg inline-block ${isDark ? 'bg-white/6' : 'bg-black/5'}`}>
                     <span className={isDark ? 'text-white/50' : 'text-slate-500'}>Budget: </span>
                     <span className={isDark ? 'text-white/80' : 'text-slate-700'}>
                       {formatCurrency(niche.budget_min || 0, niche.budget_currency)} – {formatCurrency(niche.budget_max || 0, niche.budget_currency)}

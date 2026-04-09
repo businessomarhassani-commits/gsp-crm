@@ -96,7 +96,7 @@ export default function Prospects() {
   const hasFilters = statusFilter || nicheFilter || search
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader
         title="Prospects"
         subtitle={`${prospects?.length || 0} prospects in your pipeline`}
@@ -142,7 +142,7 @@ export default function Prospects() {
               <thead>
                 <tr className={`border-b ${isDark ? 'border-white/6' : 'border-black/6'}`}>
                   {['Name & Business','Status','Niche','City','Source','Follow-up',''].map(h => (
-                    <th key={h} className={`text-xs font-medium text-left px-4 py-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
+                    <th key={h} className={`text-xs font-medium text-left px-5 py-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -150,22 +150,22 @@ export default function Prospects() {
                 {prospects.map((p) => (
                   <tr key={p.id} className={`border-b table-row-hover cursor-pointer ${isDark ? 'border-white/4' : 'border-black/4'}`}
                     onClick={() => navigate(`/prospects/${p.id}`)}>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-4">
                       <p className={`font-medium ${isDark ? 'text-white/90' : 'text-slate-800'}`}>{p.full_name}</p>
                       {p.business_name && <p className={`text-xs ${isDark ? 'text-white/40' : 'text-slate-400'}`}>{p.business_name}</p>}
                     </td>
-                    <td className="px-4 py-3"><StatusPill status={p.status} /></td>
-                    <td className="px-4 py-3">{p.niches && <NicheBadge niche={p.niches} />}</td>
-                    <td className={`px-4 py-3 ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{p.city || '—'}</td>
-                    <td className={`px-4 py-3 ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{p.source || '—'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-4"><StatusPill status={p.status} /></td>
+                    <td className="px-5 py-4">{p.niches && <NicheBadge niche={p.niches} />}</td>
+                    <td className={`px-5 py-4 ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{p.city || '—'}</td>
+                    <td className={`px-5 py-4 ${isDark ? 'text-white/50' : 'text-slate-500'}`}>{p.source || '—'}</td>
+                    <td className="px-5 py-4">
                       {p.follow_up_date && (
                         <span className={`text-xs ${new Date(p.follow_up_date) < new Date() ? 'text-red-400' : (isDark ? 'text-white/50' : 'text-slate-500')}`}>
                           {format(new Date(p.follow_up_date), 'MMM d')}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
                         <button onClick={() => navigate(`/prospects/${p.id}`)}
                           className={`p-1.5 rounded-lg cursor-pointer transition-colors ${isDark ? 'hover:bg-white/8 text-white/30 hover:text-white' : 'hover:bg-black/6 text-slate-300 hover:text-slate-600'}`}>

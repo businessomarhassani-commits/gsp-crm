@@ -107,16 +107,16 @@ export default function Settings() {
   )
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-8 max-w-4xl">
       <PageHeader title="Settings" subtitle="Manage your account and preferences" />
 
-      <div className="flex gap-5">
+      <div className="flex gap-7">
         {/* Sidebar nav */}
-        <div className="w-44 shrink-0 hidden sm:block">
-          <GlassCard className="p-2 sticky top-20">
+        <div className="w-48 shrink-0 hidden sm:block">
+          <GlassCard className="p-2 sticky top-24">
             {SECTIONS.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setActive(id)}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                   active === id
                     ? (isDark ? 'bg-white/10 text-white' : 'bg-black/6 text-slate-800')
                     : (isDark ? 'text-white/45 hover:bg-white/6 hover:text-white/80' : 'text-slate-500 hover:bg-black/4 hover:text-slate-700')
@@ -129,9 +129,9 @@ export default function Settings() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 space-y-5">
+        <div className="flex-1 space-y-6">
           {active === 'profile' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="Profile" subtitle="Your personal information">
                 <form onSubmit={hProfile(saveProfile)} className="space-y-3 max-w-sm">
                   <Input label="Full Name" placeholder="Your name" error={eProfile.full_name?.message} {...rProfile('full_name')} />
@@ -147,7 +147,7 @@ export default function Settings() {
           )}
 
           {active === 'appearance' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="Appearance" subtitle="Theme and language preferences">
                 <div className="space-y-4 max-w-sm">
                   <div>
@@ -176,7 +176,7 @@ export default function Settings() {
           )}
 
           {active === 'currency' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="Currency" subtitle="Set your preferred currency and exchange rates">
                 <div className="space-y-4 max-w-sm">
                   <div>
@@ -206,7 +206,7 @@ export default function Settings() {
           )}
 
           {active === 'ai' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="AI Configuration" subtitle="Claude API key for Copy Studio and Creative Studio">
                 <div className="space-y-3 max-w-sm">
                   <div className="relative">
@@ -243,7 +243,7 @@ export default function Settings() {
           )}
 
           {active === 'notifications' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="Notifications" subtitle="Control in-app notification preferences">
                 <div className="flex items-center justify-between max-w-sm p-3 rounded-xl border ${isDark ? 'border-white/8' : 'border-black/8'}">
                   <div>
@@ -262,7 +262,7 @@ export default function Settings() {
           )}
 
           {active === 'danger' && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-7">
               <Section title="Danger Zone" subtitle="Irreversible account actions">
                 <div className={`p-4 rounded-xl border ${isDark ? 'border-red-500/20 bg-red-500/6' : 'border-red-200 bg-red-50'}`}>
                   <h4 className="text-sm font-semibold text-red-400 mb-1">Delete Account</h4>

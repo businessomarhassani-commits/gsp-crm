@@ -78,7 +78,7 @@ export default function CopyStudio() {
   const inputClass = `w-full ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-white/30' : 'bg-black/4 border-black/10 text-slate-900 placeholder:text-slate-400'} border rounded-xl px-3 py-2 text-sm outline-none transition-all`
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader title="Copy Studio" subtitle="AI-powered sales copy generation" />
 
       {!claudeApiKey && (
@@ -88,11 +88,11 @@ export default function CopyStudio() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Form */}
-        <GlassCard className="p-5">
-          <h3 className={`text-sm font-semibold mb-4 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Configure Copy</h3>
-          <div className="space-y-3">
+        <GlassCard className="p-7">
+          <h3 className={`text-base font-semibold mb-5 ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Configure Copy</h3>
+          <div className="space-y-4">
             <FormSelect label="Niche" value={form.niche_id} onChange={e => setForm(f => ({ ...f, niche_id: e.target.value }))}>
               <option value="">Select niche…</option>
               {niches?.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -135,9 +135,9 @@ export default function CopyStudio() {
         </GlassCard>
 
         {/* Right: Output */}
-        <GlassCard className="p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-semibold ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Generated Copy</h3>
+        <GlassCard className="p-7 flex flex-col">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className={`text-base font-semibold ${isDark ? 'text-white/80' : 'text-slate-700'}`}>Generated Copy</h3>
             {output && (
               <div className="flex gap-2">
                 <Button variant="secondary" size="xs" icon={copied ? CheckCircle : Copy} onClick={handleCopy}>
@@ -186,8 +186,8 @@ export default function CopyStudio() {
 
       {/* Library */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className={`text-sm font-semibold ${isDark ? 'text-white/70' : 'text-slate-600'}`}>Saved Copy Library</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-base font-semibold ${isDark ? 'text-white/70' : 'text-slate-600'}`}>Saved Copy Library</h3>
           <div className="flex gap-2">
             <FormSelect value={libNiche} onChange={e => setLibNiche(e.target.value)} wrapperClass="">
               <option value="">All Niches</option>
@@ -205,9 +205,9 @@ export default function CopyStudio() {
             <EmptyState icon={PenTool} title="No saved copies" message="Generate and save copy to build your library." />
           </GlassCard>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredLib.map(item => (
-              <GlassCard key={item.id} className="p-4">
+              <GlassCard key={item.id} className="p-6">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex flex-wrap gap-1.5">
                     {item.niches && <NicheBadge niche={item.niches} size="xs" />}

@@ -126,7 +126,7 @@ export default function ProspectDetail() {
   const filteredLogs = activeTab === 'timeline' ? logs : logs?.filter(l => l.type === typeMap[activeTab])
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="space-y-8 max-w-5xl">
       {/* Header */}
       <div className="flex items-start gap-4">
         <button onClick={() => navigate('/prospects')} className={`p-2 rounded-xl cursor-pointer transition-colors ${isDark ? 'hover:bg-white/8 text-white/50' : 'hover:bg-black/6 text-slate-400'}`}>
@@ -148,11 +148,11 @@ export default function ProspectDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Contact Info */}
-        <div className="space-y-4">
-          <GlassCard className="p-4">
-            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Contact Info</h3>
+        <div className="space-y-5">
+          <GlassCard className="p-6">
+            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Contact Info</h3>
             {editMode ? (
               <form onSubmit={handleSubmit(onSave)} className="space-y-3">
                 <Input label="Phone" {...register('phone')} />
@@ -213,9 +213,9 @@ export default function ProspectDetail() {
           </GlassCard>
 
           {/* Quick Actions */}
-          <GlassCard className="p-4">
-            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Log Outreach</h3>
-            <div className="grid grid-cols-2 gap-2">
+          <GlassCard className="p-6">
+            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-white/35' : 'text-slate-400'}`}>Log Outreach</h3>
+            <div className="grid grid-cols-2 gap-2.5">
               {OUTREACH_TYPES.map(t => (
                 <Button key={t.value} variant="secondary" size="sm" onClick={() => setLogModal(t.value)} className="justify-start">
                   {t.label.split(' ')[0]}
@@ -232,9 +232,9 @@ export default function ProspectDetail() {
 
         {/* Right: Timeline */}
         <div className="lg:col-span-2">
-          <GlassCard className="p-4">
+          <GlassCard className="p-6">
             {/* Tabs */}
-            <div className={`flex gap-1 p-1 rounded-xl mb-4 overflow-x-auto ${isDark ? 'bg-white/5' : 'bg-black/4'}`}>
+            <div className={`flex gap-1 p-1 rounded-xl mb-5 overflow-x-auto ${isDark ? 'bg-white/5' : 'bg-black/4'}`}>
               {TABS.map(t => (
                 <button key={t.id} onClick={() => setActiveTab(t.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
