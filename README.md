@@ -1,16 +1,83 @@
-# React + Vite
+# ArchiCRM
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CRM professionnel pour cabinets d'architecture — multi-tenant, sécurisé, en français.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend** : React 18 + Vite + TailwindCSS
+- **Backend** : Node.js + Express
+- **Base de données** : PostgreSQL (Supabase)
+- **Auth** : JWT personnalisé
 
-## React Compiler
+## Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Cloner le projet
 
-## Expanding the ESLint configuration
+```bash
+git clone https://github.com/businessomarhassani-commits/gsp-crm.git
+cd gsp-crm
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Configurer les variables d'environnement
+
+```bash
+cp .env.example .env
+# Remplir SUPABASE_URL, SUPABASE_ANON_KEY, JWT_SECRET
+```
+
+### 3. Installer les dépendances backend
+
+```bash
+npm install
+```
+
+### 4. Installer les dépendances frontend
+
+```bash
+cd client
+npm install
+cd ..
+```
+
+### 5. Appliquer le schéma SQL
+
+Exécuter `server/db/schema.sql` dans votre projet Supabase (SQL Editor).
+
+### 6. Lancer en développement
+
+Terminal 1 – Backend :
+```bash
+npm run dev:server
+```
+
+Terminal 2 – Frontend :
+```bash
+npm run dev:client
+```
+
+Frontend : http://localhost:5173  
+Backend : http://localhost:3001
+
+## Comptes de test
+
+| Email | Mot de passe | Rôle |
+|-------|-------------|------|
+| admin@archicrm.ma | Admin2024! | admin |
+| karim@archicrm.ma | User2024! | user |
+| sara@archicrm.ma | User2024! | user |
+| youssef@archicrm.ma | User2024! | user |
+
+## Déploiement Vercel
+
+Variables d'environnement à configurer dans Vercel :
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `JWT_SECRET`
+
+## API External (webhook leads)
+
+```bash
+POST /api/leads
+Headers: X-API-Key: <votre_api_key>
+Body: { name, phone, email, project_type, city, budget, source }
+```
