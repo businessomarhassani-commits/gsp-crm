@@ -68,6 +68,7 @@ router.get('/users', async (req, res) => {
   const { data: users } = await supabase
     .from('users')
     .select('id, name, email, role, status, plan, api_key, created_at')
+    .neq('role', 'admin')
     .order('created_at', { ascending: false })
 
   const usersWithStats = await Promise.all((users || []).map(async u => {

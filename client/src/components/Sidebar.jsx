@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV = [
   { to: '/',           label: 'Tableau de bord', emoji: '📊' },
@@ -10,8 +11,25 @@ const NAV = [
   { to: '/finance',    label: 'Finance',          emoji: '💰' },
 ]
 
+function MoonIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  )
+}
+
+function SunIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  )
+}
+
 export default function Sidebar() {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -51,30 +69,28 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
-
-        {user?.role === 'admin' && (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 mt-2 ${
-                isActive
-                  ? 'bg-purple-500 text-white font-semibold'
-                  : 'text-purple-300/80 hover:text-purple-200 hover:bg-purple-500/15'
-              }`
-            }
-          >
-            <span className="text-base w-5 text-center">🛡️</span>
-            Admin Panel
-          </NavLink>
-        )}
       </nav>
 
-      {/* User + Logout */}
-      <div className="px-3 py-4 border-t border-white/10">
+      {/* Bottom section */}
+      <div className="px-3 py-4 border-t border-white/10 space-y-1">
+        {/* User info */}
         <div className="px-4 py-3 rounded-xl bg-white/5 mb-2">
           <p className="text-white text-sm font-medium truncate">{user?.name || '—'}</p>
           <p className="text-white/40 text-xs truncate">{user?.email}</p>
         </div>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/8 transition-all duration-150"
+        >
+          <span className="w-5 text-center flex items-center justify-center">
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </span>
+          {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+        </button>
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"

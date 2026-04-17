@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import AdminLayout from './components/AdminLayout'
 import Login from './pages/Login'
@@ -20,7 +21,7 @@ import AdminSettings from './pages/AdminSettings'
 // CRM routes — only for non-admin users
 function CRMRoute({ children }) {
   const { user, token, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-cream flex items-center justify-center"><div className="text-navy/40 text-sm">Chargement…</div></div>
+  if (loading) return <div className="min-h-screen bg-cream dark:bg-[#0f1117] flex items-center justify-center"><div className="text-navy/40 dark:text-gray-500 text-sm">Chargement…</div></div>
   if (!token) return <Navigate to="/login" replace />
   if (user?.role === 'admin') return <Navigate to="/admin" replace />
   return <Layout>{children}</Layout>
@@ -29,7 +30,7 @@ function CRMRoute({ children }) {
 // Admin routes — only for admin users
 function AdminRoute({ children }) {
   const { user, token, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-[#0f1117] flex items-center justify-center"><div className="text-gray-500 text-sm">Chargement…</div></div>
+  if (loading) return <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#0f1117] flex items-center justify-center"><div className="text-gray-400 text-sm">Chargement…</div></div>
   if (!token) return <Navigate to="/login" replace />
   if (user?.role !== 'admin') return <Navigate to="/" replace />
   return <AdminLayout>{children}</AdminLayout>
@@ -39,8 +40,8 @@ function AppRoutes() {
   const { user, token, loading } = useAuth()
 
   if (loading) return (
-    <div className="min-h-screen bg-cream flex items-center justify-center">
-      <div className="text-navy/40 text-sm">Chargement…</div>
+    <div className="min-h-screen bg-cream dark:bg-[#0f1117] flex items-center justify-center">
+      <div className="text-navy/40 dark:text-gray-500 text-sm">Chargement…</div>
     </div>
   )
 
@@ -73,8 +74,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

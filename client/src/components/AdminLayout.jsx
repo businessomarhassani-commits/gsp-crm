@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV = [
   {
@@ -42,15 +43,32 @@ const NAV = [
   },
 ]
 
+function MoonIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  )
+}
+
+function SunIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  )
+}
+
 export default function AdminLayout({ children }) {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = () => { logout(); navigate('/login') }
 
   return (
-    <div className="flex min-h-screen bg-[#0f1117]">
-      {/* Sidebar */}
+    <div className="flex min-h-screen bg-[#F0F2F5] dark:bg-[#0f1117]">
+      {/* Sidebar — always dark */}
       <aside className="w-[240px] shrink-0 bg-[#111827] flex flex-col fixed top-0 left-0 h-full z-30 border-r border-white/5">
         {/* Logo */}
         <div className="px-6 py-6 border-b border-white/5">
@@ -88,9 +106,10 @@ export default function AdminLayout({ children }) {
           ))}
         </nav>
 
-        {/* User */}
-        <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-3 mb-3">
+        {/* Bottom actions */}
+        <div className="p-4 border-t border-white/5 space-y-1">
+          {/* User info */}
+          <div className="flex items-center gap-3 px-2 py-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-indigo-600/20 border border-indigo-600/30 flex items-center justify-center shrink-0">
               <span className="text-indigo-400 text-xs font-bold">{user?.name?.[0]?.toUpperCase() || 'A'}</span>
             </div>
@@ -99,11 +118,22 @@ export default function AdminLayout({ children }) {
               <p className="text-gray-500 text-xs truncate">{user?.email}</p>
             </div>
           </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          >
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+          </button>
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-400/5 transition-colors flex items-center gap-2"
+            className="w-full flex items-center gap-3 px-3 py-2 text-xs text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-400/5 transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             Déconnexion
