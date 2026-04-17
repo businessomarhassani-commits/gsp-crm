@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
+import AdminLayout from './components/AdminLayout'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
@@ -10,31 +11,62 @@ import ClientDetail from './pages/ClientDetail'
 import Pipeline from './pages/Pipeline'
 import Reminders from './pages/Reminders'
 import Finance from './pages/Finance'
-import Admin from './pages/Admin'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminUsers from './pages/AdminUsers'
+import AdminUserDetail from './pages/AdminUserDetail'
+import AdminAnalytics from './pages/AdminAnalytics'
+import AdminSettings from './pages/AdminSettings'
 
-function ProtectedRoute({ children, adminOnly = false }) {
+// CRM routes — only for non-admin users
+function CRMRoute({ children }) {
   const { user, token, loading } = useAuth()
   if (loading) return <div className="min-h-screen bg-cream flex items-center justify-center"><div className="text-navy/40 text-sm">Chargement…</div></div>
   if (!token) return <Navigate to="/login" replace />
-  if (adminOnly && user?.role !== 'admin') return <Navigate to="/" replace />
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />
   return <Layout>{children}</Layout>
 }
 
+// Admin routes — only for admin users
+function AdminRoute({ children }) {
+  const { user, token, loading } = useAuth()
+  if (loading) return <div className="min-h-screen bg-[#0f1117] flex items-center justify-center"><div className="text-gray-500 text-sm">Chargement…</div></div>
+  if (!token) return <Navigate to="/login" replace />
+  if (user?.role !== 'admin') return <Navigate to="/" replace />
+  return <AdminLayout>{children}</AdminLayout>
+}
+
 function AppRoutes() {
-  const { token } = useAuth()
+  const { user, token, loading } = useAuth()
+
+  if (loading) return (
+    <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="text-navy/40 text-sm">Chargement…</div>
+    </div>
+  )
+
   return (
     <Routes>
-      <Route path="/login"  element={token ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/signup" element={token ? <Navigate to="/" replace /> : <Signup />} />
-      <Route path="/"           element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/leads"      element={<ProtectedRoute><Leads /></ProtectedRoute>} />
-      <Route path="/clients"    element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-      <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
-      <Route path="/pipeline"   element={<ProtectedRoute><Pipeline /></ProtectedRoute>} />
-      <Route path="/reminders"  element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
-      <Route path="/finance"    element={<ProtectedRoute><Finance /></ProtectedRoute>} />
-      <Route path="/admin"      element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Public */}
+      <Route path="/login"  element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />} />
+      <Route path="/signup" element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Signup />} />
+
+      {/* CRM — user only */}
+      <Route path="/"            element={<CRMRoute><Dashboard /></CRMRoute>} />
+      <Route path="/leads"       element={<CRMRoute><Leads /></CRMRoute>} />
+      <Route path="/clients"     element={<CRMRoute><Clients /></CRMRoute>} />
+      <Route path="/clients/:id" element={<CRMRoute><ClientDetail /></CRMRoute>} />
+      <Route path="/pipeline"    element={<CRMRoute><Pipeline /></CRMRoute>} />
+      <Route path="/reminders"   element={<CRMRoute><Reminders /></CRMRoute>} />
+      <Route path="/finance"     element={<CRMRoute><Finance /></CRMRoute>} />
+
+      {/* Admin panel — admin only */}
+      <Route path="/admin"               element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/users"         element={<AdminRoute><AdminUsers /></AdminRoute>} />
+      <Route path="/admin/users/:id"     element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
+      <Route path="/admin/analytics"     element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+      <Route path="/admin/settings"      element={<AdminRoute><AdminSettings /></AdminRoute>} />
+
+      <Route path="*" element={<Navigate to={token ? (user?.role === 'admin' ? '/admin' : '/') : '/login'} replace />} />
     </Routes>
   )
 }
