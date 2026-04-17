@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { v4: uuidv4 } = require('uuid')
 const supabase = require('../db')
+const { auth } = require('../middleware/auth')
 const router = express.Router()
 
 // POST /api/auth/signup
@@ -51,6 +52,12 @@ router.post('/login', async (req, res) => {
   const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' })
   const { password: _, ...safeUser } = user
   res.json({ token, user: safeUser })
+})
+
+// GET /api/auth/me
+router.get('/me', auth, (req, res) => {
+  const { password, ...safeUser } = req.user
+  res.json(safeUser)
 })
 
 module.exports = router

@@ -81,7 +81,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* KPI grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <StatCard
           label="Utilisateurs"
           value={stats?.total_users ?? 0}
@@ -89,22 +89,10 @@ export default function AdminDashboard() {
           color="indigo"
         />
         <StatCard
-          label="Leads total"
-          value={stats?.total_leads ?? 0}
-          sub={`${analytics?.won_leads ?? 0} gagnés`}
-          color="emerald"
-        />
-        <StatCard
           label="CA plateforme"
           value={formatDH(stats?.total_revenue)}
           sub="toutes périodes"
           color="amber"
-        />
-        <StatCard
-          label="Taux de conversion"
-          value={`${analytics?.conversion_rate ?? 0}%`}
-          sub="leads → gagnés"
-          color="violet"
         />
       </div>
 

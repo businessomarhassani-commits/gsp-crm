@@ -9,12 +9,22 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      // Verify token by fetching current user info from dashboard
-      api.get('/api/dashboard').catch(() => {
-        logout()
-      }).finally(() => setLoading(false))
+    const stored = localStorage.getItem('archicrm_token')
+    if (stored) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${stored}`
+      // Fetch full user profile (including role) so routing decisions are correct on refresh
+      api.get('/api/auth/me')
+        .then(res => {
+          setUser(res.data)
+        })
+        .catch(() => {
+          // Token invalid or expired — clear it
+          localStorage.removeItem('archicrm_token')
+          delete api.defaults.headers.common['Authorization']
+          setToken(null)
+          setUser(null)
+        })
+        .finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
