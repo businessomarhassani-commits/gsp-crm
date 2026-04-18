@@ -7,6 +7,26 @@ const META_APP_ID = process.env.META_APP_ID
 const META_APP_SECRET = process.env.META_APP_SECRET
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://project-ibkk1.vercel.app'
 
+// Subscribe the ArchiCRM app to leadgen events for a given page
+async function subscribePageToLeadgen(pageId, pageAccessToken) {
+  const url = `https://graph.facebook.com/v18.0/${pageId}/subscribed_apps`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      subscribed_fields: 'leadgen',
+      access_token: pageAccessToken,
+    }),
+  })
+  const data = await res.json()
+  if (data.error) {
+    console.error(`subscribed_apps error for page ${pageId}:`, data.error)
+    return { success: false, error: data.error }
+  }
+  console.log(`✓ Subscribed app to leadgen for page ${pageId}:`, data)
+  return { success: true }
+}
+
 // The callback URL must match exactly what is registered in the Meta App dashboard
 function callbackUrl(req) {
   const base = process.env.SERVER_URL || FRONTEND_URL
@@ -98,6 +118,8 @@ router.get('/callback', async (req, res) => {
         is_active: true,
         connected_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
+      // Subscribe app to leadgen events for this page
+      await subscribePageToLeadgen(page.id, page.access_token)
       return res.redirect(`${FRONTEND_URL}/integrations?meta=success`)
     }
 
@@ -182,7 +204,34 @@ router.post('/select-page', auth, async (req, res) => {
     .single()
 
   if (error) return res.status(500).json({ error: error.message })
+
+  // Subscribe app to leadgen events for the newly activated page
+  await subscribePageToLeadgen(page.id, page.token)
+
   res.json(data)
+})
+
+// POST /api/meta/subscribe-page — (re)subscribe app to leadgen for user's active page
+router.post('/subscribe-page', auth, async (req, res) => {
+  const { data: connection } = await supabase
+    .from('meta_connections')
+    .select('page_id, access_token')
+    .eq('user_id', req.user.id)
+    .eq('is_active', true)
+    .single()
+
+  if (!connection || !connection.page_id) {
+    return res.status(404).json({ error: 'Aucune page active trouvée. Reconnectez votre compte Meta.' })
+  }
+  if (!connection.access_token) {
+    return res.status(400).json({ error: 'Token d\'accès manquant. Reconnectez votre compte Meta.' })
+  }
+
+  const result = await subscribePageToLeadgen(connection.page_id, connection.access_token)
+  if (!result.success) {
+    return res.status(502).json({ error: 'Échec de la souscription Meta.', detail: result.error })
+  }
+  res.json({ success: true, page_id: connection.page_id })
 })
 
 // DELETE /api/meta/connection — disconnect
