@@ -70,41 +70,45 @@ router.get('/meta', (req, res) => {
 router.post('/meta', async (req, res) => {
   console.log('[webhook] POST /meta received')
   console.log('[webhook] Headers:', JSON.stringify({
-    'content-type':       req.headers['content-type'],
+    'content-type':        req.headers['content-type'],
     'x-hub-signature-256': req.headers['x-hub-signature-256'] || '(missing)',
-    'user-agent':         req.headers['user-agent'],
+    'user-agent':          req.headers['user-agent'],
   }))
 
-  // Log raw body
-  const rawBody = req.body
-  const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString() : String(rawBody || '')
-  console.log('[webhook] Raw body:', bodyStr.slice(0, 2000)) // cap at 2000 chars
+  // req.body is the parsed JSON object (express.json() already ran)
+  // req.rawBody is the raw Buffer captured in express.json()'s verify callback
+  const rawBody = req.rawBody   // Buffer from verify callback
+  const payload = req.body      // already-parsed JSON object
+
+  console.log('[webhook] Parsed payload:', JSON.stringify(payload).slice(0, 2000))
 
   // ── Signature verification ────────────────────────────────────────────────
   if (META_APP_SECRET) {
     const sig = req.headers['x-hub-signature-256']
     if (!sig) {
       if (IS_PROD) {
-        console.warn('[webhook] REJECT — Missing x-hub-signature-256 (production mode)')
+        console.warn('[webhook] REJECT — Missing x-hub-signature-256 (production)')
         return res.status(403).json({ error: 'Missing signature' })
       }
-      console.warn('[webhook] WARNING — Missing x-hub-signature-256 (non-production: continuing anyway)')
-    } else {
+      console.warn('[webhook] WARNING — Missing x-hub-signature-256 (non-production: continuing)')
+    } else if (rawBody) {
       const expected = 'sha256=' + crypto
         .createHmac('sha256', META_APP_SECRET)
         .update(rawBody)
         .digest('hex')
-      console.log('[webhook] Signature check — received:', sig)
-      console.log('[webhook] Signature check — expected:', expected)
+      console.log('[webhook] Signature received:', sig)
+      console.log('[webhook] Signature expected:', expected)
       if (sig !== expected) {
         if (IS_PROD) {
-          console.warn('[webhook] REJECT — Invalid signature (production mode)')
+          console.warn('[webhook] REJECT — Signature mismatch (production)')
           return res.status(403).json({ error: 'Invalid signature' })
         }
-        console.warn('[webhook] WARNING — Signature mismatch (non-production: continuing anyway)')
+        console.warn('[webhook] WARNING — Signature mismatch (non-production: continuing)')
       } else {
         console.log('[webhook] Signature verified ✓')
       }
+    } else {
+      console.warn('[webhook] rawBody not available for signature check — skipping')
     }
   } else {
     console.warn('[webhook] META_APP_SECRET not set — skipping signature verification')
@@ -114,13 +118,8 @@ router.post('/meta', async (req, res) => {
   res.status(200).send('OK')
   console.log('[webhook] Sent 200 OK to Meta')
 
-  // ── Parse body ────────────────────────────────────────────────────────────
-  let payload
-  try {
-    payload = JSON.parse(bodyStr)
-    console.log('[webhook] Parsed payload — object:', JSON.stringify(payload).slice(0, 1000))
-  } catch (e) {
-    console.error('[webhook] JSON parse error:', e.message, '— body was:', bodyStr.slice(0, 500))
+  if (!payload || typeof payload !== 'object') {
+    console.error('[webhook] payload is missing or not an object — body:', req.body)
     return
   }
 
