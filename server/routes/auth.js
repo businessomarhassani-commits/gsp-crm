@@ -102,4 +102,19 @@ router.put('/password', auth, async (req, res) => {
   res.json({ success: true })
 })
 
+// PUT /api/auth/force-password — admin sets user password via impersonation (no current password required)
+router.put('/force-password', auth, async (req, res) => {
+  if (!req.user.isImpersonation) {
+    return res.status(403).json({ error: 'Réservé aux sessions d\'administration' })
+  }
+  const { new_password } = req.body
+  if (!new_password) return res.status(400).json({ error: 'Nouveau mot de passe requis' })
+  if (new_password.length < 8) return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 8 caractères' })
+
+  const hashed = await bcrypt.hash(new_password, 12)
+  const { error } = await supabase.from('users').update({ password: hashed }).eq('id', req.user.id)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ success: true })
+})
+
 module.exports = router
