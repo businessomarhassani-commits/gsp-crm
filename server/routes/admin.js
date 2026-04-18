@@ -33,6 +33,7 @@ router.get('/analytics', async (req, res) => {
 
   const { data: leads } = await supabase.from('leads').select('id, status')
   const { data: users } = await supabase.from('users').select('id, created_at, status').order('created_at', { ascending: true })
+  const { count: metaConnectionsCount } = await supabase.from('meta_connections').select('id', { count: 'exact', head: true }).eq('is_active', true)
 
   // Build monthly revenue & new users for last 12 months
   const now = new Date()
@@ -60,7 +61,7 @@ router.get('/analytics', async (req, res) => {
   const totalLeads = leads?.length || 0
   const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0
 
-  res.json({ monthly: months, conversion_rate: conversionRate, total_leads: totalLeads, won_leads: wonLeads })
+  res.json({ monthly: months, conversion_rate: conversionRate, total_leads: totalLeads, won_leads: wonLeads, meta_connections_count: metaConnectionsCount || 0 })
 })
 
 // GET /api/admin/users
@@ -72,10 +73,13 @@ router.get('/users', async (req, res) => {
     .order('created_at', { ascending: false })
 
   const usersWithStats = await Promise.all((users || []).map(async u => {
-    const { data: leads } = await supabase.from('leads').select('id').eq('user_id', u.id)
-    const { data: clients } = await supabase.from('clients').select('project_value').eq('user_id', u.id)
+    const [{ data: leads }, { data: clients }, { data: metaConn }] = await Promise.all([
+      supabase.from('leads').select('id').eq('user_id', u.id),
+      supabase.from('clients').select('project_value').eq('user_id', u.id),
+      supabase.from('meta_connections').select('is_active').eq('user_id', u.id).eq('is_active', true).maybeSingle()
+    ])
     const ca = clients?.reduce((sum, c) => sum + (Number(c.project_value) || 0), 0) || 0
-    return { ...u, lead_count: leads?.length || 0, ca }
+    return { ...u, lead_count: leads?.length || 0, ca, has_meta_connection: !!metaConn }
   }))
 
   res.json(usersWithStats)
@@ -140,6 +144,137 @@ router.delete('/users/:id', async (req, res) => {
   const { error } = await supabase.from('users').delete().eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
   res.json({ success: true })
+})
+
+// ─── Meta subscription management ────────────────────────────────────────────
+
+// GET /api/admin/meta/check-subscriptions
+// For each active meta_connection, call Graph API to see which apps are subscribed
+router.get('/meta/check-subscriptions', async (req, res) => {
+  const { data: connections, error } = await supabase
+    .from('meta_connections')
+    .select('user_id, page_id, page_name, access_token, is_active')
+    .eq('is_active', true)
+
+  if (error) return res.status(500).json({ error: error.message })
+  if (!connections || connections.length === 0) {
+    return res.json({ message: 'No active meta connections found', results: [] })
+  }
+
+  const results = await Promise.all(connections.map(async (conn) => {
+    if (!conn.page_id || !conn.access_token) {
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        error: 'Missing page_id or access_token',
+        subscribed_apps: null,
+      }
+    }
+
+    try {
+      const url = `https://graph.facebook.com/v18.0/${conn.page_id}/subscribed_apps?access_token=${conn.access_token}`
+      console.log(`[admin/meta] Checking subscriptions for page ${conn.page_id} (${conn.page_name})`)
+      const apiRes = await fetch(url)
+      const data = await apiRes.json()
+
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        token_prefix: conn.access_token?.slice(0, 20) + '…',
+        subscribed_apps: data.data || [],
+        raw_response: data,
+      }
+    } catch (err) {
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        error: err.message,
+        subscribed_apps: null,
+      }
+    }
+  }))
+
+  res.json({ total: results.length, results })
+})
+
+// POST /api/admin/meta/subscribe-all-pages
+// Subscribe the ArchiCRM app to leadgen + leadgen_update for every active page
+router.post('/meta/subscribe-all-pages', async (req, res) => {
+  const { data: connections, error } = await supabase
+    .from('meta_connections')
+    .select('user_id, page_id, page_name, access_token, is_active')
+    .eq('is_active', true)
+
+  if (error) return res.status(500).json({ error: error.message })
+  if (!connections || connections.length === 0) {
+    return res.json({ message: 'No active meta connections found', results: [] })
+  }
+
+  const results = await Promise.all(connections.map(async (conn) => {
+    if (!conn.page_id || !conn.access_token) {
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        success: false,
+        error: 'Missing page_id or access_token',
+      }
+    }
+
+    try {
+      // IMPORTANT: must use the PAGE access token, not the user access token
+      const url = `https://graph.facebook.com/v18.0/${conn.page_id}/subscribed_apps`
+      console.log(`[admin/meta] Subscribing page ${conn.page_id} (${conn.page_name}) using PAGE token`)
+
+      const apiRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          subscribed_fields: 'leadgen,leadgen_update',
+          access_token: conn.access_token,  // PAGE access token stored in meta_connections
+        }),
+      })
+      const data = await apiRes.json()
+      console.log(`[admin/meta] subscribed_apps response for page ${conn.page_id}:`, JSON.stringify(data))
+
+      if (data.error) {
+        return {
+          page_id: conn.page_id,
+          page_name: conn.page_name,
+          user_id: conn.user_id,
+          success: false,
+          error: data.error,
+          raw_response: data,
+        }
+      }
+
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        success: data.success === true,
+        raw_response: data,
+      }
+    } catch (err) {
+      console.error(`[admin/meta] Network error subscribing page ${conn.page_id}:`, err)
+      return {
+        page_id: conn.page_id,
+        page_name: conn.page_name,
+        user_id: conn.user_id,
+        success: false,
+        error: err.message,
+      }
+    }
+  }))
+
+  const succeeded = results.filter(r => r.success).length
+  const failed    = results.filter(r => !r.success).length
+  console.log(`[admin/meta] subscribe-all-pages complete — ${succeeded} succeeded, ${failed} failed`)
+
+  res.json({ total: results.length, succeeded, failed, results })
 })
 
 module.exports = router
