@@ -17,6 +17,9 @@ import AdminUsers from './pages/AdminUsers'
 import AdminUserDetail from './pages/AdminUserDetail'
 import AdminAnalytics from './pages/AdminAnalytics'
 import AdminSettings from './pages/AdminSettings'
+import Integrations from './pages/Integrations'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 // CRM routes — only for non-admin users
 function CRMRoute({ children }) {
@@ -47,9 +50,11 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/login"  element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />} />
-      <Route path="/signup" element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Signup />} />
+      {/* Public — no auth required */}
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms"   element={<Terms />} />
+      <Route path="/login"   element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />} />
+      <Route path="/signup"  element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Signup />} />
 
       {/* CRM — user only */}
       <Route path="/"            element={<CRMRoute><Dashboard /></CRMRoute>} />
@@ -58,7 +63,8 @@ function AppRoutes() {
       <Route path="/clients/:id" element={<CRMRoute><ClientDetail /></CRMRoute>} />
       <Route path="/pipeline"    element={<CRMRoute><Pipeline /></CRMRoute>} />
       <Route path="/reminders"   element={<CRMRoute><Reminders /></CRMRoute>} />
-      <Route path="/finance"     element={<CRMRoute><Finance /></CRMRoute>} />
+      <Route path="/finance"       element={<CRMRoute><Finance /></CRMRoute>} />
+      <Route path="/integrations" element={<CRMRoute><Integrations /></CRMRoute>} />
 
       {/* Admin panel — admin only */}
       <Route path="/admin"               element={<AdminRoute><AdminDashboard /></AdminRoute>} />
