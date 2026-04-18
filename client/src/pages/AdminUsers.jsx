@@ -4,10 +4,11 @@ import api from '../utils/api'
 import toast from 'react-hot-toast'
 import Modal from '../components/Modal'
 import { formatDH, formatDate } from '../utils/format'
+import { Eye, CheckCircle, XCircle } from 'lucide-react'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([])
-  const [filtered, setFiltered] = useState([])
+  const [tab, setTab] = useState('active') // 'active' | 'pending'
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -18,16 +19,19 @@ export default function AdminUsers() {
   const load = async () => {
     const { data } = await api.get('/api/admin/users')
     setUsers(data)
-    setFiltered(data)
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
-  useEffect(() => {
+  const activeUsers  = users.filter(u => u.account_status !== 'pending')
+  const pendingUsers = users.filter(u => u.account_status === 'pending')
+
+  const filtered = (tab === 'pending' ? pendingUsers : activeUsers).filter(u => {
+    if (!search) return true
     const q = search.toLowerCase()
-    setFiltered(q ? users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : users)
-  }, [search, users])
+    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  })
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -72,6 +76,37 @@ export default function AdminUsers() {
     } catch { toast.error('Erreur') }
   }
 
+  const handleApprove = async (user) => {
+    try {
+      await api.put(`/api/admin/users/${user.id}/approve`)
+      toast.success(`${user.name} approuvé`)
+      load()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur')
+    }
+  }
+
+  const handleReject = async (user) => {
+    if (!window.confirm(`Rejeter et supprimer le compte de ${user.name} ?`)) return
+    try {
+      await api.delete(`/api/admin/users/${user.id}/reject`)
+      toast.success('Compte rejeté')
+      load()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur')
+    }
+  }
+
+  const handleImpersonate = async (user) => {
+    try {
+      const { data } = await api.post(`/api/admin/impersonate/${user.id}`)
+      // Pass token via URL — the new tab's AuthContext will pick it up and store in sessionStorage
+      window.open(`/?impersonate=${encodeURIComponent(data.token)}`, '_blank')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur impersonation')
+    }
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   if (loading) return (
@@ -87,14 +122,38 @@ export default function AdminUsers() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Utilisateurs</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            {users.length} compte{users.length !== 1 ? 's' : ''} enregistré{users.length !== 1 ? 's' : ''}
+            {activeUsers.length} compte{activeUsers.length !== 1 ? 's' : ''} actif{activeUsers.length !== 1 ? 's' : ''}
+            {pendingUsers.length > 0 && (
+              <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">· {pendingUsers.length} en attente</span>
+            )}
           </p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+          className="flex items-center gap-2 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
-          <span className="text-lg leading-none">+</span> Nouveau
+          + Nouveau
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 bg-gray-100 dark:bg-white/[0.05] p-1 rounded-lg w-fit">
+        <button
+          onClick={() => setTab('active')}
+          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'active' ? 'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+        >
+          Actifs ({activeUsers.length})
+        </button>
+        <button
+          onClick={() => setTab('pending')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${tab === 'pending' ? 'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+        >
+          En attente
+          {pendingUsers.length > 0 && (
+            <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+              {pendingUsers.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -106,116 +165,172 @@ export default function AdminUsers() {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher un utilisateur…"
-          className="w-full max-w-sm pl-10 pr-4 py-2.5 bg-white dark:bg-[#111827] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500/50 transition-colors"
+          placeholder="Rechercher…"
+          className="w-full max-w-sm pl-10 pr-4 py-2.5 bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#E8A838]/50 transition-colors"
         />
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-transparent">
-                {['Utilisateur','Rôle','Leads','CA','Inscription','Statut','Actions'].map(h => (
-                  <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center text-gray-400 text-sm py-12">Aucun utilisateur trouvé</td>
-                </tr>
-              ) : filtered.map(u => (
-                <tr
-                  key={u.id}
-                  className="border-b border-gray-50 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
-                  onClick={() => navigate(`/admin/users/${u.id}`)}
-                >
-                  {/* Utilisateur */}
-                  <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-600/30 flex items-center justify-center shrink-0">
-                        <span className="text-indigo-600 dark:text-indigo-400 text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <p
-                          className="font-medium text-gray-900 dark:text-white text-xs hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/admin/users/${u.id}`)}
-                        >
-                          {u.name}
-                        </p>
-                        <p className="text-gray-400 text-xs">{u.email}</p>
-                      </div>
+      {/* Pending tab */}
+      {tab === 'pending' && (
+        <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-sm">Aucune demande en attente</div>
+          ) : (
+            <div className="divide-y divide-gray-50 dark:divide-white/[0.04]">
+              {filtered.map(u => (
+                <div key={u.id} className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+                      <span className="text-amber-600 dark:text-amber-400 text-sm font-bold">{u.name?.[0]?.toUpperCase()}</span>
                     </div>
-                  </td>
-
-                  {/* Rôle */}
-                  <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                    <select
-                      value={u.role}
-                      onChange={e => handleRoleChange(u, e.target.value)}
-                      className="text-xs bg-transparent border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-indigo-500/50"
+                    <div>
+                      <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{u.name}</p>
+                      <p className="text-[11px] text-gray-400">{u.email} · {formatDate(u.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleApprove(u)}
+                      className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors"
                     >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </td>
-
-                  {/* Leads */}
-                  <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">{u.lead_count ?? 0}</td>
-
-                  {/* CA */}
-                  <td className="px-4 py-3.5 text-emerald-600 dark:text-emerald-400 font-medium">{formatDH(u.ca)}</td>
-
-                  {/* Inscription */}
-                  <td className="px-4 py-3.5 text-gray-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
-
-                  {/* Statut */}
-                  <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                    {u.status === 'suspended' ? (
-                      <span className="inline-flex items-center gap-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700/30 px-2 py-0.5 rounded-full font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400" />
-                        Suspendu
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700/30 px-2 py-0.5 rounded-full font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                        Actif
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleSuspend(u)}
-                        className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
-                          u.status === 'suspended'
-                            ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                            : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                        }`}
-                      >
-                        {u.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
-                      </button>
-                      {u.role !== 'admin' && (
-                        <button
-                          onClick={() => handleDelete(u)}
-                          className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1.5 rounded-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                      <CheckCircle size={13} />
+                      Approuver
+                    </button>
+                    <button
+                      onClick={() => handleReject(u)}
+                      className="flex items-center gap-1.5 text-[12px] font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <XCircle size={13} />
+                      Rejeter
+                    </button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Active tab table */}
+      {tab === 'active' && (
+        <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-white/[0.06] bg-gray-50 dark:bg-transparent">
+                  {['Utilisateur','Rôle','Leads','CA','META','Inscription','Statut','Actions'].map(h => (
+                    <th key={h} className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={8} className="text-center text-gray-400 text-sm py-12">Aucun utilisateur trouvé</td></tr>
+                ) : filtered.map(u => (
+                  <tr
+                    key={u.id}
+                    className="border-b border-gray-50 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                    onClick={() => navigate(`/admin/users/${u.id}`)}
+                  >
+                    {/* Utilisateur */}
+                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#E8A838]/10 border border-[#E8A838]/20 flex items-center justify-center shrink-0">
+                          <span className="text-[#E8A838] text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white text-xs hover:text-[#E8A838] transition-colors cursor-pointer"
+                            onClick={() => navigate(`/admin/users/${u.id}`)}>
+                            {u.name}
+                          </p>
+                          <p className="text-gray-400 text-xs">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Rôle */}
+                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                      <select
+                        value={u.role}
+                        onChange={e => handleRoleChange(u, e.target.value)}
+                        className="text-xs bg-transparent border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300 focus:outline-none"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+
+                    {/* Leads */}
+                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 text-xs">{u.lead_count ?? 0}</td>
+
+                    {/* CA */}
+                    <td className="px-4 py-3.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">{formatDH(u.ca)}</td>
+
+                    {/* META */}
+                    <td className="px-4 py-3.5">
+                      {u.has_meta_connection ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />Connecté
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                      )}
+                    </td>
+
+                    {/* Inscription */}
+                    <td className="px-4 py-3.5 text-gray-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
+
+                    {/* Statut */}
+                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                      {u.status === 'suspended' ? (
+                        <span className="inline-flex items-center gap-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded font-medium">Suspendu</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Actif
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-1">
+                        {/* Impersonate */}
+                        <button
+                          onClick={() => handleImpersonate(u)}
+                          title="Accéder au CRM de cet utilisateur"
+                          className="p-1.5 text-gray-400 hover:text-[#E8A838] hover:bg-[#E8A838]/10 rounded-lg transition-colors"
+                        >
+                          <Eye size={14} />
+                        </button>
+
+                        <button
+                          onClick={() => handleSuspend(u)}
+                          className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
+                            u.status === 'suspended'
+                              ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                              : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                          }`}
+                        >
+                          {u.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
+                        </button>
+
+                        {u.role !== 'admin' && (
+                          <button
+                            onClick={() => handleDelete(u)}
+                            className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1.5 rounded-lg transition-colors"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Create modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nouvel utilisateur">
@@ -239,7 +354,7 @@ export default function AdminUsers() {
               <option value="admin">Administrateur</option>
             </select>
           </div>
-          <button type="submit" disabled={saving} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+          <button type="submit" disabled={saving} className="w-full py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors hover:bg-gray-700 dark:hover:bg-gray-100">
             {saving ? 'Création…' : "Créer l'utilisateur"}
           </button>
         </form>

@@ -9,14 +9,23 @@ const auth = async (req, res, next) => {
   const token = authHeader.split(' ')[1]
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+
+    // Support impersonation tokens: { userId, impersonatedBy, isImpersonation: true }
+    const userId = decoded.isImpersonation ? decoded.userId : decoded.id
+
     const { data: user, error } = await supabase
       .from('users')
       .select('id, name, email, role, status, api_key')
-      .eq('id', decoded.id)
+      .eq('id', userId)
       .single()
     if (error || !user) return res.status(401).json({ error: 'Utilisateur introuvable' })
     if (user.status === 'suspended') return res.status(403).json({ error: 'Compte suspendu' })
-    req.user = user
+
+    req.user = {
+      ...user,
+      isImpersonation: decoded.isImpersonation || false,
+      impersonatedBy: decoded.impersonatedBy || null,
+    }
     next()
   } catch {
     return res.status(401).json({ error: 'Token invalide ou expiré' })

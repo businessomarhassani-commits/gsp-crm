@@ -1,5 +1,6 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const { v4: uuidv4 } = require('uuid')
 const supabase = require('../db')
 const { auth } = require('../middleware/auth')
@@ -64,11 +65,20 @@ router.get('/analytics', async (req, res) => {
   res.json({ monthly: months, conversion_rate: conversionRate, total_leads: totalLeads, won_leads: wonLeads, meta_connections_count: metaConnectionsCount || 0 })
 })
 
+// GET /api/admin/users/pending-count  — returns count of pending accounts
+router.get('/users/pending-count', async (req, res) => {
+  const { count } = await supabase
+    .from('users')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_status', 'pending')
+  res.json({ count: count || 0 })
+})
+
 // GET /api/admin/users
 router.get('/users', async (req, res) => {
   const { data: users } = await supabase
     .from('users')
-    .select('id, name, email, role, status, plan, api_key, created_at')
+    .select('id, name, email, role, status, account_status, plan, api_key, created_at')
     .neq('role', 'admin')
     .order('created_at', { ascending: false })
 
@@ -144,6 +154,50 @@ router.delete('/users/:id', async (req, res) => {
   const { error } = await supabase.from('users').delete().eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
   res.json({ success: true })
+})
+
+// PUT /api/admin/users/:id/approve — approve pending account
+router.put('/users/:id/approve', async (req, res) => {
+  const { data, error } = await supabase
+    .from('users')
+    .update({ account_status: 'active' })
+    .eq('id', req.params.id)
+    .eq('account_status', 'pending')
+    .select('id, name, email, account_status')
+    .single()
+  if (error || !data) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà approuvé' })
+  res.json(data)
+})
+
+// DELETE /api/admin/users/:id/reject — reject (delete) a pending account
+router.delete('/users/:id/reject', async (req, res) => {
+  const { data: user } = await supabase.from('users').select('account_status').eq('id', req.params.id).single()
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
+  if (user.account_status !== 'pending') return res.status(400).json({ error: 'Ce compte n\'est pas en attente' })
+  const { error } = await supabase.from('users').delete().eq('id', req.params.id)
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ success: true })
+})
+
+// POST /api/admin/impersonate/:userId — generate short-lived impersonation token
+router.post('/impersonate/:userId', async (req, res) => {
+  if (req.params.userId === req.user.id) {
+    return res.status(400).json({ error: 'Impossible de vous impersonner vous-même' })
+  }
+  const { data: target } = await supabase
+    .from('users')
+    .select('id, name, email, role')
+    .eq('id', req.params.userId)
+    .single()
+  if (!target) return res.status(404).json({ error: 'Utilisateur introuvable' })
+  if (target.role === 'admin') return res.status(403).json({ error: 'Impossible d\'impersonner un administrateur' })
+
+  const token = jwt.sign(
+    { userId: target.id, impersonatedBy: req.user.id, isImpersonation: true },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' }
+  )
+  res.json({ token, user: target })
 })
 
 // ─── Meta subscription management ────────────────────────────────────────────

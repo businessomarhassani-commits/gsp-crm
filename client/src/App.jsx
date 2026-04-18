@@ -18,6 +18,7 @@ import AdminUserDetail from './pages/AdminUserDetail'
 import AdminAnalytics from './pages/AdminAnalytics'
 import AdminSettings from './pages/AdminSettings'
 import Integrations from './pages/Integrations'
+import UserSettings from './pages/UserSettings'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/reminders"   element={<CRMRoute><Reminders /></CRMRoute>} />
       <Route path="/finance"       element={<CRMRoute><Finance /></CRMRoute>} />
       <Route path="/integrations" element={<CRMRoute><Integrations /></CRMRoute>} />
+      <Route path="/settings"     element={<CRMRoute><UserSettings /></CRMRoute>} />
 
       {/* Admin panel — admin only */}
       <Route path="/admin"               element={<AdminRoute><AdminDashboard /></AdminRoute>} />
