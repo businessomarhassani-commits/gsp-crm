@@ -69,12 +69,17 @@ router.get('/me', auth, (req, res) => {
   res.json(safeUser)
 })
 
-// PUT /api/auth/profile — update name / email only
+// PUT /api/auth/profile — update name / email / password (password is optional)
 router.put('/profile', auth, async (req, res) => {
-  const { name, email } = req.body
+  const { name, email, password } = req.body
   const updates = {}
   if (name) updates.name = name
   if (email) updates.email = email.toLowerCase()
+  if (password) {
+    if (password.length < 6) return res.status(400).json({ error: 'Mot de passe trop court (min 6 caractères)' })
+    updates.password = await bcrypt.hash(password, 12)
+    console.log(`[auth/profile] Password updated for user ${req.user.id}`)
+  }
   const { data, error } = await supabase
     .from('users').update(updates).eq('id', req.user.id)
     .select('id, name, email, role, status, account_status, api_key').single()
