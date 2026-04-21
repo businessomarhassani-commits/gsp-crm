@@ -25,7 +25,7 @@ const NAV = [
   { to: '/settings',   label: 'Paramètres',        Icon: Settings },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
@@ -36,7 +36,15 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-[240px] bg-[#0A0A0A] flex flex-col z-30 border-t-2 border-[#E8A838]">
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+    <aside className={`fixed left-0 top-0 h-full w-[240px] bg-[#0A0A0A] flex flex-col z-40 border-t-2 border-[#E8A838] transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/[0.07]">
         <div className="flex items-center gap-2.5">
@@ -54,6 +62,7 @@ export default function Sidebar() {
             key={to}
             to={to}
             end={end}
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
                 isActive
@@ -99,5 +108,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   )
 }

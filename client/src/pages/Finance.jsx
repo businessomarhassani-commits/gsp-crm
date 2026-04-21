@@ -57,9 +57,9 @@ export default function Finance() {
   return (
     <div className="space-y-8 max-w-5xl">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Finance</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-navy">Finance</h1>
           <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de votre chiffre d'affaires</p>
         </div>
         <DateRangePicker from={range.from} to={range.to} onChange={setRange} />
@@ -130,25 +130,40 @@ export default function Finance() {
                 <p className="text-xs text-gray-300 mt-1">Les leads marqués "Gagné" apparaissent ici</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    {['Client','Type de projet','Valeur','Date clôture'].map(h => (
-                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {deals.map(d => (
-                    <tr key={d.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                      <td className="px-5 py-3 font-medium text-navy">{d.name}</td>
-                      <td className="px-5 py-3 text-gray-500">{d.project_type || '—'}</td>
-                      <td className="px-5 py-3 font-semibold text-green-600">{formatDH(d.project_value)}</td>
-                      <td className="px-5 py-3 text-gray-400 text-xs">{formatDate(d.closing_date)}</td>
+              <>
+                {/* Desktop table */}
+                <table className="w-full text-sm hidden sm:table">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      {['Client','Type de projet','Valeur','Date clôture'].map(h => (
+                        <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                      ))}
                     </tr>
+                  </thead>
+                  <tbody>
+                    {deals.map(d => (
+                      <tr key={d.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                        <td className="px-5 py-3 font-medium text-navy">{d.name}</td>
+                        <td className="px-5 py-3 text-gray-500">{d.project_type || '—'}</td>
+                        <td className="px-5 py-3 font-semibold text-green-600">{formatDH(d.project_value)}</td>
+                        <td className="px-5 py-3 text-gray-400 text-xs">{formatDate(d.closing_date)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Mobile cards */}
+                <div className="sm:hidden divide-y divide-gray-50">
+                  {deals.map(d => (
+                    <div key={d.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-navy text-sm truncate">{d.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{d.project_type || '—'} · {formatDate(d.closing_date)}</p>
+                      </div>
+                      <span className="font-bold text-green-600 text-sm shrink-0">{formatDH(d.project_value)}</span>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </>
             )}
           </div>
         </>

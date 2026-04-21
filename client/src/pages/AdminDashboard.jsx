@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Vue d'ensemble de la plateforme ArchiCRM</p>
       </div>
 
@@ -102,15 +102,15 @@ export default function AdminDashboard() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue chart */}
-        <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-gray-200 dark:border-white/5">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white dark:bg-[#111827] rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-white/5">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <h2 className="text-gray-900 dark:text-white font-semibold text-sm">Revenus mensuels</h2>
               <p className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">12 derniers mois</p>
             </div>
             <span className="text-indigo-500 dark:text-indigo-400 font-bold text-sm">{formatDH(totalMonthlyRevenue)}</span>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={analytics?.monthly || []} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
@@ -128,15 +128,15 @@ export default function AdminDashboard() {
         </div>
 
         {/* New users chart */}
-        <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-gray-200 dark:border-white/5">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white dark:bg-[#111827] rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-white/5">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
               <h2 className="text-gray-900 dark:text-white font-semibold text-sm">Nouveaux utilisateurs</h2>
               <p className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">12 derniers mois</p>
             </div>
             <span className="text-emerald-500 dark:text-emerald-400 font-bold text-sm">{stats?.total_users ?? 0} au total</span>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={180}>
             <BarChart data={analytics?.monthly || []} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: tickColor }} axisLine={false} tickLine={false} />
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         {[
           { label: 'Gérer les utilisateurs', sub: `${stats?.total_users ?? 0} comptes`, href: '/admin/users' },
           { label: 'Analytics détaillées',   sub: 'Tendances & revenus',                href: '/admin/analytics' },

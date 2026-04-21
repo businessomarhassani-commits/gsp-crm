@@ -36,7 +36,7 @@ export default function AdminAnalytics() {
         ...row,
         name: `${MONTH_NAMES[row.month - 1]} ${String(row.year).slice(2)}`
       }))
-      setAnalytics({ ...r.data, monthly })
+      setAnalytics({ ...r.data, monthly, meta_connections_count: r.data.meta_connections_count || 0 })
       setLoading(false)
     })
   }, [])
@@ -66,12 +66,13 @@ export default function AdminAnalytics() {
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Tendances plateforme sur les 12 derniers mois</p>
       </div>
 
-      {/* Summary cards — 3 cards (no Taux conversion) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Summary cards — 4 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'CA 12 mois',     value: formatDH(totalRevenue), color: 'text-indigo-500 dark:text-indigo-400' },
-          { label: 'Nouveaux users', value: totalNewUsers,           color: 'text-emerald-500 dark:text-emerald-400' },
-          { label: 'Mois record',    value: peakRevenueMonth.name || '—', color: 'text-violet-500 dark:text-violet-400' },
+          { label: 'CA 12 mois',            value: formatDH(totalRevenue),              color: 'text-indigo-500 dark:text-indigo-400' },
+          { label: 'Nouveaux users',         value: totalNewUsers,                       color: 'text-emerald-500 dark:text-emerald-400' },
+          { label: 'Mois record',            value: peakRevenueMonth.name || '—',        color: 'text-violet-500 dark:text-violet-400' },
+          { label: 'Comptes Meta connectés', value: analytics.meta_connections_count,    color: 'text-blue-500 dark:text-blue-400' },
         ].map(c => (
           <div key={c.label} className={card}>
             <p className="text-gray-400 text-xs uppercase tracking-wider font-medium mb-3">{c.label}</p>

@@ -80,10 +80,10 @@ export default function Pipeline() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Pipeline</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-navy">Pipeline</h1>
           <p className="text-gray-500 text-sm mt-1">{leads.length} lead{leads.length !== 1 ? 's' : ''} au total</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm">
           <span>+</span> Nouveau lead
         </button>
       </div>
@@ -155,8 +155,8 @@ export default function Pipeline() {
       {/* Create modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nouveau lead">
         <form onSubmit={handleCreate} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
               <label className="label">Nom complet *</label>
               <input required className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Mehdi Laaroussi" />
             </div>

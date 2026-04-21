@@ -62,7 +62,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
         <p className="text-gray-400 text-sm mt-0.5">Bonjour, {user?.name?.split(' ')[0]}</p>
       </div>
 
@@ -91,9 +91,9 @@ export default function Dashboard() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Area chart — 60% */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5">
+        <div className="lg:col-span-3 bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/[0.06] rounded-xl p-4 sm:p-5">
           <h2 className="text-[13px] font-semibold text-gray-700 dark:text-white mb-4">Activité des leads</h2>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={data?.monthly_chart || []} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
@@ -120,12 +120,12 @@ export default function Dashboard() {
         </div>
 
         {/* Donut chart — 40% */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/[0.06] rounded-xl p-5">
+        <div className="lg:col-span-2 bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/[0.06] rounded-xl p-4 sm:p-5">
           <h2 className="text-[13px] font-semibold text-gray-700 dark:text-white mb-4">Répartition des statuts</h2>
           {statusData.length === 0 ? (
-            <div className="flex items-center justify-center h-[200px] text-gray-300 text-sm">Aucune donnée</div>
+            <div className="flex items-center justify-center h-[180px] text-gray-300 text-sm">Aucune donnée</div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
                   data={statusData}

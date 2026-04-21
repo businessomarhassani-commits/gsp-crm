@@ -75,12 +75,12 @@ export default function Reminders() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Rappels</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-navy">Rappels</h1>
           <p className="text-gray-500 text-sm mt-1">
             {data.pending.length} en attente · {data.done.length} terminé{data.done.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm">
           <span>+</span> Nouveau rappel
         </button>
       </div>
@@ -125,42 +125,42 @@ export default function Reminders() {
           list.map(r => {
             const overdue = tab === 'pending' && isOverdue(r.reminder_date)
             return (
-              <div key={r.id} className={`card p-5 flex items-start gap-4 ${overdue ? 'border-l-4 border-red-400' : ''}`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-navy">{r.title}</p>
-                    {overdue && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">En retard</span>
+              <div key={r.id} className={`card p-4 sm:p-5 ${overdue ? 'border-l-4 border-red-400' : ''}`}>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-navy">{r.title}</p>
+                      {overdue && (
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">En retard</span>
+                      )}
+                    </div>
+                    {r.description && (
+                      <p className="text-xs text-gray-400 mt-1">{r.description}</p>
                     )}
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <span className={`text-xs font-medium ${overdue ? 'text-red-500' : 'text-gold'}`}>
+                        🕐 {formatDateTime(r.reminder_date)}
+                      </span>
+                      {r.client_name && (
+                        <span className="text-xs text-gray-400">👤 {r.client_name}</span>
+                      )}
+                    </div>
                   </div>
-                  {r.description && (
-                    <p className="text-xs text-gray-400 mt-1">{r.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    <span className={`text-xs font-medium ${overdue ? 'text-red-500' : 'text-gold'}`}>
-                      🕐 {formatDateTime(r.reminder_date)}
-                    </span>
-                    {r.client_name && (
-                      <span className="text-xs text-gray-400">👤 {r.client_name}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {tab === 'pending' && (
-                    <button
-                      onClick={() => markDone(r.id)}
-                      className="text-xs bg-green-50 text-green-600 hover:bg-green-100 font-medium px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      ✓ Fait
-                    </button>
-                  )}
                   <button
                     onClick={() => deleteReminder(r.id)}
-                    className="text-xs text-gray-300 hover:text-red-400 px-2 py-1.5 rounded-lg transition-colors"
+                    className="text-xs text-gray-300 hover:text-red-400 px-2 py-1.5 rounded-lg transition-colors shrink-0"
                   >
                     ✕
                   </button>
                 </div>
+                {tab === 'pending' && (
+                  <button
+                    onClick={() => markDone(r.id)}
+                    className="mt-3 w-full sm:w-auto text-xs bg-green-50 text-green-600 hover:bg-green-100 font-medium px-4 py-2 rounded-lg transition-colors"
+                  >
+                    ✓ Marquer comme fait
+                  </button>
+                )}
               </div>
             )
           })

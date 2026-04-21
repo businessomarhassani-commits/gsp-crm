@@ -120,7 +120,7 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Utilisateurs</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Utilisateurs</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             {activeUsers.length} compte{activeUsers.length !== 1 ? 's' : ''} actif{activeUsers.length !== 1 ? 's' : ''}
             {pendingUsers.length > 0 && (
@@ -178,27 +178,27 @@ export default function AdminUsers() {
           ) : (
             <div className="divide-y divide-gray-50 dark:divide-white/[0.04]">
               {filtered.map(u => (
-                <div key={u.id} className="flex items-center justify-between px-5 py-4">
-                  <div className="flex items-center gap-3">
+                <div key={u.id} className="px-4 sm:px-5 py-4">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
                       <span className="text-amber-600 dark:text-amber-400 text-sm font-bold">{u.name?.[0]?.toUpperCase()}</span>
                     </div>
-                    <div>
-                      <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{u.name}</p>
-                      <p className="text-[11px] text-gray-400">{u.email} · {formatDate(u.created_at)}</p>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-900 dark:text-white truncate">{u.name}</p>
+                      <p className="text-[11px] text-gray-400 truncate">{u.email} · {formatDate(u.created_at)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleApprove(u)}
-                      className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 px-3 py-1.5 rounded-lg transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 px-3 py-2 rounded-lg transition-colors"
                     >
                       <CheckCircle size={13} />
                       Approuver
                     </button>
                     <button
                       onClick={() => handleReject(u)}
-                      className="flex items-center gap-1.5 text-[12px] font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 px-3 py-1.5 rounded-lg transition-colors"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-[12px] font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 px-3 py-2 rounded-lg transition-colors"
                     >
                       <XCircle size={13} />
                       Rejeter
@@ -211,125 +211,122 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Active tab table */}
+      {/* Active tab */}
       {tab === 'active' && (
-        <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-white/[0.06] bg-gray-50 dark:bg-transparent">
-                  {['Utilisateur','Rôle','Leads','CA','META','Inscription','Statut','Actions'].map(h => (
-                    <th key={h} className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center text-gray-400 text-sm py-12">Aucun utilisateur trouvé</td></tr>
-                ) : filtered.map(u => (
-                  <tr
-                    key={u.id}
-                    className="border-b border-gray-50 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
-                    onClick={() => navigate(`/admin/users/${u.id}`)}
-                  >
-                    {/* Utilisateur */}
-                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#E8A838]/10 border border-[#E8A838]/20 flex items-center justify-center shrink-0">
-                          <span className="text-[#E8A838] text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white text-xs hover:text-[#E8A838] transition-colors cursor-pointer"
-                            onClick={() => navigate(`/admin/users/${u.id}`)}>
-                            {u.name}
-                          </p>
-                          <p className="text-gray-400 text-xs">{u.email}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Rôle */}
-                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                      <select
-                        value={u.role}
-                        onChange={e => handleRoleChange(u, e.target.value)}
-                        className="text-xs bg-transparent border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300 focus:outline-none"
-                      >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </td>
-
-                    {/* Leads */}
-                    <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 text-xs">{u.lead_count ?? 0}</td>
-
-                    {/* CA */}
-                    <td className="px-4 py-3.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">{formatDH(u.ca)}</td>
-
-                    {/* META */}
-                    <td className="px-4 py-3.5">
-                      {u.has_meta_connection ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />Connecté
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
-                      )}
-                    </td>
-
-                    {/* Inscription */}
-                    <td className="px-4 py-3.5 text-gray-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
-
-                    {/* Statut */}
-                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                      {u.status === 'suspended' ? (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded font-medium">Suspendu</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Actif
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        {/* Impersonate */}
-                        <button
-                          onClick={() => handleImpersonate(u)}
-                          title="Accéder au CRM de cet utilisateur"
-                          className="p-1.5 text-gray-400 hover:text-[#E8A838] hover:bg-[#E8A838]/10 rounded-lg transition-colors"
-                        >
-                          <Eye size={14} />
-                        </button>
-
-                        <button
-                          onClick={() => handleSuspend(u)}
-                          className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
-                            u.status === 'suspended'
-                              ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                              : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                          }`}
-                        >
-                          {u.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
-                        </button>
-
-                        {u.role !== 'admin' && (
-                          <button
-                            onClick={() => handleDelete(u)}
-                            className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1.5 rounded-lg transition-colors"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-white/[0.06] bg-gray-50 dark:bg-transparent">
+                    {['Utilisateur','Rôle','Leads','CA','META','Inscription','Statut','Actions'].map(h => (
+                      <th key={h} className="text-left px-4 py-3.5 text-[11px] font-semibold text-gray-400 dark:text-white/30 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={8} className="text-center text-gray-400 text-sm py-12">Aucun utilisateur trouvé</td></tr>
+                  ) : filtered.map(u => (
+                    <tr
+                      key={u.id}
+                      className="border-b border-gray-50 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                      onClick={() => navigate(`/admin/users/${u.id}`)}
+                    >
+                      <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#E8A838]/10 border border-[#E8A838]/20 flex items-center justify-center shrink-0">
+                            <span className="text-[#E8A838] text-xs font-bold">{u.name?.[0]?.toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white text-xs hover:text-[#E8A838] cursor-pointer" onClick={() => navigate(`/admin/users/${u.id}`)}>{u.name}</p>
+                            <p className="text-gray-400 text-xs">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                        <select value={u.role} onChange={e => handleRoleChange(u, e.target.value)} className="text-xs bg-transparent border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300 focus:outline-none">
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 text-xs">{u.lead_count ?? 0}</td>
+                      <td className="px-4 py-3.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">{formatDH(u.ca)}</td>
+                      <td className="px-4 py-3.5">
+                        {u.has_meta_connection ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" />Connecté</span>
+                        ) : <span className="text-xs text-gray-300 dark:text-gray-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-400 text-xs whitespace-nowrap">{formatDate(u.created_at)}</td>
+                      <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                        {u.status === 'suspended' ? (
+                          <span className="inline-flex items-center gap-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded font-medium">Suspendu</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Actif</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleImpersonate(u)} title="Accéder au CRM" className="p-1.5 text-gray-400 hover:text-[#E8A838] hover:bg-[#E8A838]/10 rounded-lg transition-colors"><Eye size={14} /></button>
+                          <button onClick={() => handleSuspend(u)} className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${u.status === 'suspended' ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`}>
+                            {u.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
+                          </button>
+                          {u.role !== 'admin' && (
+                            <button onClick={() => handleDelete(u)} className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1.5 rounded-lg transition-colors">✕</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-3">
+            {filtered.length === 0 ? (
+              <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] p-8 text-center text-gray-400 text-sm">
+                Aucun utilisateur trouvé
+              </div>
+            ) : filtered.map(u => (
+              <div key={u.id} className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-white/[0.06] p-4">
+                <div className="flex items-center gap-3 mb-3" onClick={() => navigate(`/admin/users/${u.id}`)}>
+                  <div className="w-10 h-10 rounded-full bg-[#E8A838]/10 border border-[#E8A838]/20 flex items-center justify-center shrink-0">
+                    <span className="text-[#E8A838] text-sm font-bold">{u.name?.[0]?.toUpperCase()}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{u.name}</p>
+                    <p className="text-gray-400 text-xs truncate">{u.email}</p>
+                  </div>
+                  {u.status === 'suspended' ? (
+                    <span className="text-xs bg-red-50 dark:bg-red-900/20 text-red-500 px-2 py-0.5 rounded font-medium shrink-0">Suspendu</span>
+                  ) : (
+                    <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 px-2 py-0.5 rounded font-medium shrink-0">Actif</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-400 mb-3 flex-wrap">
+                  <span>{u.lead_count ?? 0} leads</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatDH(u.ca)}</span>
+                  {u.has_meta_connection && <span className="text-blue-500">Meta ✓</span>}
+                  <span>{u.role}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleImpersonate(u)} className="flex items-center gap-1.5 text-xs text-[#E8A838] bg-[#E8A838]/10 hover:bg-[#E8A838]/20 font-medium px-3 py-1.5 rounded-lg transition-colors">
+                    <Eye size={12} /> Accéder
+                  </button>
+                  <button onClick={() => handleSuspend(u)} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${u.status === 'suspended' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'}`}>
+                    {u.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
+                  </button>
+                  {u.role !== 'admin' && (
+                    <button onClick={() => handleDelete(u)} className="ml-auto text-xs text-red-400 hover:text-red-600 px-2 py-1.5 rounded-lg transition-colors">✕</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create modal */}

@@ -12,13 +12,15 @@ import {
   LogOut,
   Sun,
   Moon,
+  Menu,
 } from 'lucide-react'
 
-function AdminNavItem({ to, label, Icon, end, badge }) {
+function AdminNavItem({ to, label, Icon, end, badge, onClose }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onClose}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
           isActive
@@ -47,6 +49,7 @@ export default function AdminLayout({ children }) {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [pendingCount, setPendingCount] = useState(0)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     api.get('/api/admin/users/pending-count')
@@ -55,11 +58,20 @@ export default function AdminLayout({ children }) {
   }, [])
 
   const handleLogout = () => { logout(); navigate('/login') }
+  const closeSidebar = () => setSidebarOpen(false)
 
   return (
     <div className="flex min-h-screen bg-[#F0F2F5] dark:bg-[#0A0A0A]">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar — always dark */}
-      <aside className="w-[240px] shrink-0 bg-[#0A0A0A] flex flex-col fixed top-0 left-0 h-full z-30 border-t-2 border-[#E8A838]">
+      <aside className={`w-[240px] shrink-0 bg-[#0A0A0A] flex flex-col fixed top-0 left-0 h-full z-40 border-t-2 border-[#E8A838] transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/[0.07]">
           <div className="flex items-center gap-2.5">
@@ -75,10 +87,10 @@ export default function AdminLayout({ children }) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          <AdminNavItem to="/admin"           label="Dashboard"    Icon={LayoutDashboard} end />
-          <AdminNavItem to="/admin/users"     label="Utilisateurs" Icon={Users}           badge={pendingCount} />
-          <AdminNavItem to="/admin/analytics" label="Analytics"    Icon={BarChart2} />
-          <AdminNavItem to="/admin/settings"  label="Paramètres"   Icon={Settings} />
+          <AdminNavItem to="/admin"           label="Dashboard"    Icon={LayoutDashboard} end onClose={closeSidebar} />
+          <AdminNavItem to="/admin/users"     label="Utilisateurs" Icon={Users}           badge={pendingCount} onClose={closeSidebar} />
+          <AdminNavItem to="/admin/analytics" label="Analytics"    Icon={BarChart2} onClose={closeSidebar} />
+          <AdminNavItem to="/admin/settings"  label="Paramètres"   Icon={Settings} onClose={closeSidebar} />
         </nav>
 
         {/* Bottom */}
@@ -109,9 +121,33 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
+      {/* Mobile top header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-[#0A0A0A] border-b-2 border-[#E8A838] flex items-center px-4 gap-3">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="flex items-center gap-2">
+          <Logo size={24} />
+          <div>
+            <span className="font-bold text-[14px]">
+              <span className="text-white">Archi</span><span className="text-[#E8A838]">CRM</span>
+            </span>
+            <span className="text-white/35 text-[9px] font-medium tracking-wide uppercase ml-1.5">Admin</span>
+          </div>
+        </div>
+        {pendingCount > 0 && (
+          <div className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+            {pendingCount}
+          </div>
+        )}
+      </header>
+
       {/* Main */}
-      <main className="ml-[240px] flex-1 min-h-screen overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-8">
+      <main className="lg:ml-[240px] flex-1 min-h-screen overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pt-[72px] lg:pt-8">
           {children}
         </div>
       </main>

@@ -15,8 +15,8 @@ function LeadForm({ initial = {}, onSave, loading, niches }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   return (
     <form onSubmit={e => { e.preventDefault(); onSave(form) }} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2">
           <label className="label">Nom complet *</label>
           <input required className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Mehdi Laaroussi" />
         </div>
@@ -128,25 +128,25 @@ export default function Leads() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Leads</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-navy">Leads</h1>
           <p className="text-gray-500 text-sm mt-1">{leads.length} lead{leads.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
-          <span>+</span> Nouveau lead
+        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm">
+          <span>+</span> <span className="hidden xs:inline">Nouveau lead</span><span className="xs:hidden">Nouveau</span>
         </button>
       </div>
 
       {/* Search + filter */}
-      <div className="flex gap-3">
-        <input className="input max-w-xs" placeholder="Rechercher un lead…" value={search} onChange={e => setSearch(e.target.value)} />
-        <select className="input max-w-[180px]" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+      <div className="flex gap-2 flex-wrap">
+        <input className="input flex-1 min-w-0 sm:max-w-xs" placeholder="Rechercher un lead…" value={search} onChange={e => setSearch(e.target.value)} />
+        <select className="input w-full sm:w-auto sm:max-w-[180px]" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">Tous les statuts</option>
           {STATUSES.map(s => <option key={s}>{s}</option>)}
         </select>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* Desktop Table */}
+      <div className="card overflow-hidden hidden sm:block">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Chargement…</div>
         ) : leads.length === 0 ? (
@@ -179,6 +179,31 @@ export default function Leads() {
         )}
       </div>
 
+      {/* Mobile Card List */}
+      <div className="sm:hidden space-y-3">
+        {loading ? (
+          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Chargement…</div>
+        ) : leads.length === 0 ? (
+          <div className="card flex flex-col items-center justify-center py-12">
+            <p className="text-gray-400 text-sm">Aucun lead trouvé</p>
+            <button onClick={() => setShowCreate(true)} className="text-gold text-sm mt-2 hover:underline">+ Ajouter le premier lead</button>
+          </div>
+        ) : leads.map(lead => (
+          <div key={lead.id} onClick={() => setSelected(lead)} className="card p-4 cursor-pointer active:opacity-80 transition-opacity">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <p className="font-semibold text-navy text-sm leading-snug">{lead.name}</p>
+              <StatusBadge status={lead.status} />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+              {lead.project_type && <span>{lead.project_type}</span>}
+              {lead.city && <span>📍 {lead.city}</span>}
+              {lead.budget && <span className="text-gold font-medium">{lead.budget}</span>}
+              {lead.last_contact_date && <span>{formatDate(lead.last_contact_date)}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Create modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nouveau lead">
         <LeadForm onSave={handleCreate} loading={saving} />
@@ -187,8 +212,8 @@ export default function Leads() {
       {/* Slide-over edit panel */}
       {selected && (
         <div className="fixed inset-0 z-40 flex">
-          <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={() => setSelected(null)} />
-          <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl">
+          <div className="hidden sm:block flex-1 bg-black/30 backdrop-blur-sm" onClick={() => setSelected(null)} />
+          <div className="w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="font-semibold text-navy">{selected.name}</h2>
               <button onClick={() => setSelected(null)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 text-lg">✕</button>

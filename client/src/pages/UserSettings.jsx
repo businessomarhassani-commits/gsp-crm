@@ -67,14 +67,14 @@ function PageSelectorModal({ pages, onSelect, onClose }) {
 function SectionCard({ icon: Icon, title, badge, children }) {
   return (
     <div className="bg-white dark:bg-[#111111] border border-gray-100 dark:border-white/[0.06] rounded-xl overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-50 dark:border-white/[0.04]">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-4 border-b border-gray-50 dark:border-white/[0.04]">
         <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-white/[0.06] flex items-center justify-center">
           <Icon size={15} className="text-gray-500 dark:text-white/40" />
         </div>
         <h2 className="font-semibold text-gray-900 dark:text-white text-[14px] flex-1">{title}</h2>
         {badge}
       </div>
-      <div className="p-6">{children}</div>
+      <div className="p-4 sm:p-6">{children}</div>
     </div>
   )
 }
@@ -230,7 +230,7 @@ export default function UserSettings() {
   return (
     <div className="space-y-5 max-w-2xl">
       <div>
-        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Paramètres</h1>
+        <h1 className="text-[20px] sm:text-[22px] font-bold text-gray-900 dark:text-white">Paramètres</h1>
         <p className="text-gray-400 text-sm mt-0.5">
           {isImpersonating ? `Gestion du compte de ${user?.name}` : 'Gérez votre compte et vos préférences'}
         </p>
