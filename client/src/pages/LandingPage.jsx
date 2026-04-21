@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Users, Kanban, Zap, Bell, TrendingUp, BarChart2, Link2,
   Check, ChevronDown, Menu, X, Star, ArrowRight,
-  Shield, Clock, MessageCircle,
+  Globe, Clock, MessageCircle,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 
@@ -69,7 +69,7 @@ function NavBar() {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 bg-[#0A0A0A] border-b-2 border-[#E8A838] ${scrolled ? 'shadow-lg shadow-black/30' : ''}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
-        <Link to="/landing" className="flex items-center gap-2.5 shrink-0">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0">
           <Logo size={28} />
           <span className="font-bold text-[15px]">
             <span className="text-white">Archi</span><span className="text-[#E8A838]">CRM</span>

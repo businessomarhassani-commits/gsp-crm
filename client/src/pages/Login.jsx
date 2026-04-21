@@ -17,7 +17,7 @@ export default function Login() {
     try {
       const { data } = await api.post('/api/auth/login', form)
       login(data.token, data.user)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur de connexion')
     } finally {

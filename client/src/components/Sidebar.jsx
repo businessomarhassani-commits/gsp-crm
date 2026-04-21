@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/',           label: 'Tableau de bord', Icon: LayoutDashboard, end: true },
+  { to: '/dashboard',  label: 'Tableau de bord', Icon: LayoutDashboard, end: true },
   { to: '/leads',      label: 'Leads',            Icon: Target },
   { to: '/clients',    label: 'Clients',           Icon: Users },
   { to: '/pipeline',   label: 'Pipeline',          Icon: GitMerge },
