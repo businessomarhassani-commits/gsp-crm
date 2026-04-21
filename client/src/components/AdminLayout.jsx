@@ -16,6 +16,7 @@ import {
   Menu,
   ShieldCheck,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 function AdminNavItem({ to, label, Icon, end, badge, onClose }) {
   return (
@@ -71,7 +72,6 @@ export default function AdminLayout({ children }) {
     { to: '/', label: 'Dashboard', Icon: LayoutDashboard, end: true, always: true },
     { to: '/users', label: 'Utilisateurs', Icon: Users, badge: pendingCount, perm: 'users' },
     { to: '/analytics', label: 'Analytics', Icon: BarChart2, perm: 'analytics' },
-    { to: '/settings', label: 'Paramètres', Icon: Settings, perm: 'settings' },
   ].filter(item => item.always || isSuperAdmin || perms[item.perm])
 
   return (
@@ -127,6 +127,18 @@ export default function AdminLayout({ children }) {
             </div>
             <p className="text-white/35 text-[11px] truncate">{admin?.email}</p>
           </div>
+
+          {/* Settings link */}
+          {(isSuperAdmin || perms.settings) && (
+            <Link
+              to="/settings"
+              onClick={closeSidebar}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+            >
+              <Settings size={14} />
+              Paramètres
+            </Link>
+          )}
 
           {/* Theme toggle */}
           <button

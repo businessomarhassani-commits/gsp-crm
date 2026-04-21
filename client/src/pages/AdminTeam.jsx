@@ -296,7 +296,7 @@ export default function AdminTeam() {
 
       {/* Add/Edit Modal */}
       <Modal
-        isOpen={showModal}
+        open={showModal}
         onClose={closeModal}
         title={editing ? 'Modifier le membre' : 'Ajouter un membre'}
         size="md"
