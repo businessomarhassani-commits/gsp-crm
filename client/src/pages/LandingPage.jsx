@@ -138,6 +138,113 @@ function FAQItem({ question, answer }) {
   )
 }
 
+// ─── Product Preview ─────────────────────────────────────────────────────────
+const PREVIEW_ROWS = [
+  {
+    img: 'dashboard.png',
+    alt: 'Tableau de bord ArchiCRM',
+    title: 'Tout votre activité en un seul écran',
+    desc: "Chiffre d'affaires, leads du mois, taux de conversion — tout est visible dès que vous ouvrez ArchiCRM. Fini les tableaux Excel éparpillés.",
+    imgRight: true,
+  },
+  {
+    img: 'leads.png',
+    alt: 'Gestion des leads ArchiCRM',
+    title: 'Ne perdez plus jamais un prospect',
+    desc: "Chaque lead est enregistré, suivi et classé. Vous savez exactement où en est chaque contact : nouveau, contacté, en rendez-vous ou proposition envoyée.",
+    imgRight: false,
+  },
+  {
+    img: 'pipeline.png',
+    alt: 'Pipeline Kanban ArchiCRM',
+    title: "Visualisez vos projets d'un coup d'œil",
+    desc: "Un tableau visuel qui vous montre où se trouve chaque projet. Faites glisser vos leads d'une étape à l'autre en un clic.",
+    imgRight: true,
+  },
+  {
+    img: 'finance.png',
+    alt: 'Finance ArchiCRM',
+    title: "Suivez votre chiffre d'affaires facilement",
+    desc: "Consultez vos revenus mois par mois, vos meilleures affaires et votre performance globale. Prenez de meilleures décisions pour votre cabinet.",
+    imgRight: false,
+  },
+  {
+    img: 'rappels.png',
+    alt: 'Rappels ArchiCRM',
+    title: 'Plus jamais un rendez-vous oublié',
+    desc: "Créez des rappels pour vos relances, rendez-vous et suivis clients. ArchiCRM vous alerte avant qu'il ne soit trop tard.",
+    imgRight: true,
+  },
+  {
+    img: 'clients.png',
+    alt: 'Clients ArchiCRM',
+    title: 'Tous vos clients dans un seul endroit',
+    desc: "Accédez en un clic à l'historique complet de chaque client : projets, contacts, valeur, notes. Un vrai carnet d'adresses professionnel.",
+    imgRight: false,
+  },
+]
+
+function ProductPreview() {
+  return (
+    <section className="py-16 sm:py-28 bg-[#0A0A0A] overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+        {/* Header */}
+        <FadeIn className="text-center mb-16 sm:mb-24">
+          <p className="text-[#E8A838] text-[12px] font-semibold uppercase tracking-widest mb-3">Aperçu du produit</p>
+          <h2 className="text-[28px] sm:text-[38px] font-bold text-white leading-tight">
+            Votre cabinet, piloté<br className="hidden sm:block" /> en un coup d'œil
+          </h2>
+          <p className="text-white/40 text-[15px] mt-4 max-w-xl mx-auto leading-relaxed">
+            Une interface claire, pensée pour les architectes marocains.
+          </p>
+        </FadeIn>
+
+        {/* Alternating rows */}
+        <div className="space-y-20 sm:space-y-28">
+          {PREVIEW_ROWS.map(({ img, alt, title, desc, imgRight }, i) => (
+            <FadeIn key={img} delay={80}>
+              <div
+                className={`flex flex-col ${
+                  imgRight ? 'sm:flex-row' : 'sm:flex-row-reverse'
+                } items-center gap-8 sm:gap-12 lg:gap-16`}
+              >
+                {/* Screenshot — 60% */}
+                <div className="w-full sm:w-[60%] shrink-0">
+                  <div className="relative">
+                    <div className="absolute -inset-4 bg-[#E8A838]/[0.06] rounded-3xl blur-2xl pointer-events-none" />
+                    <img
+                      src={`/screenshots/${img}`}
+                      alt={alt}
+                      className="relative w-full h-auto rounded-xl border border-[#E8A838]/20 shadow-2xl shadow-black/70 block"
+                    />
+                  </div>
+                </div>
+
+                {/* Text — 40% */}
+                <div className="w-full sm:w-[40%]">
+                  {/* Number badge */}
+                  <div className="w-10 h-10 rounded-xl bg-[#E8A838]/10 border border-[#E8A838]/25 flex items-center justify-center mb-5">
+                    <span className="text-[#E8A838] font-bold text-[14px] tabular-nums">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <h3 className="text-white font-bold text-[20px] sm:text-[22px] leading-snug mb-4">
+                    {title}
+                  </h3>
+                  <p className="text-white/45 text-[15px] leading-relaxed">
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
@@ -330,6 +437,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* ── PRODUCT PREVIEW ──────────────────────────────────────────────────── */}
+      <ProductPreview />
 
       {/* ── PRICING ──────────────────────────────────────────────────────────── */}
       <section id="tarifs" className="py-16 sm:py-24 bg-white">
