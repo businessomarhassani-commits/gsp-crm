@@ -21,6 +21,7 @@ import Integrations from './pages/Integrations'
 import UserSettings from './pages/UserSettings'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import LandingPage from './pages/LandingPage'
 
 // CRM routes — only for non-admin users
 function CRMRoute({ children }) {
@@ -52,6 +53,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public — no auth required */}
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms"   element={<Terms />} />
       <Route path="/login"   element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />} />
