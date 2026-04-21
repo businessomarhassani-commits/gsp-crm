@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAdminAuth } from '../context/AdminAuthContext'
 import { useTheme } from '../context/ThemeContext'
 import Logo from './Logo'
 import api from '../utils/api'
@@ -9,10 +9,12 @@ import {
   Users,
   BarChart2,
   Settings,
+  Users2,
   LogOut,
   Sun,
   Moon,
   Menu,
+  ShieldCheck,
 } from 'lucide-react'
 
 function AdminNavItem({ to, label, Icon, end, badge, onClose }) {
@@ -45,20 +47,32 @@ function AdminNavItem({ to, label, Icon, end, badge, onClose }) {
 }
 
 export default function AdminLayout({ children }) {
-  const { user, logout } = useAuth()
+  const { admin, logout } = useAdminAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [pendingCount, setPendingCount] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const isSuperAdmin = admin?.role === 'superadmin'
+  const perms = admin?.permissions || {}
+
   useEffect(() => {
-    api.get('/api/admin/users/pending-count')
-      .then(r => setPendingCount(r.data.count || 0))
-      .catch(() => {})
-  }, [])
+    if (isSuperAdmin || perms.users) {
+      api.get('/api/admin/users/pending-count')
+        .then(r => setPendingCount(r.data.count || 0))
+        .catch(() => {})
+    }
+  }, [isSuperAdmin, perms.users])
 
   const handleLogout = () => { logout(); navigate('/login') }
   const closeSidebar = () => setSidebarOpen(false)
+
+  const navItems = [
+    { to: '/', label: 'Dashboard', Icon: LayoutDashboard, end: true, always: true },
+    { to: '/users', label: 'Utilisateurs', Icon: Users, badge: pendingCount, perm: 'users' },
+    { to: '/analytics', label: 'Analytics', Icon: BarChart2, perm: 'analytics' },
+    { to: '/settings', label: 'Paramètres', Icon: Settings, perm: 'settings' },
+  ].filter(item => item.always || isSuperAdmin || perms[item.perm])
 
   return (
     <div className="flex min-h-screen bg-[#F0F2F5] dark:bg-[#0A0A0A]">
@@ -87,18 +101,31 @@ export default function AdminLayout({ children }) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          <AdminNavItem to="/admin"           label="Dashboard"    Icon={LayoutDashboard} end onClose={closeSidebar} />
-          <AdminNavItem to="/admin/users"     label="Utilisateurs" Icon={Users}           badge={pendingCount} onClose={closeSidebar} />
-          <AdminNavItem to="/admin/analytics" label="Analytics"    Icon={BarChart2} onClose={closeSidebar} />
-          <AdminNavItem to="/admin/settings"  label="Paramètres"   Icon={Settings} onClose={closeSidebar} />
+          {navItems.map(item => (
+            <AdminNavItem
+              key={item.to}
+              to={item.to}
+              label={item.label}
+              Icon={item.Icon}
+              end={item.end}
+              badge={item.badge}
+              onClose={closeSidebar}
+            />
+          ))}
+          {isSuperAdmin && (
+            <AdminNavItem to="/team" label="Mon Équipe" Icon={Users2} onClose={closeSidebar} />
+          )}
         </nav>
 
         {/* Bottom */}
         <div className="px-3 py-4 border-t border-white/[0.07] space-y-0.5">
-          {/* User */}
+          {/* User info */}
           <div className="px-3 py-2.5 rounded-lg bg-white/[0.05] mb-2">
-            <p className="text-white text-[13px] font-medium truncate">{user?.name || 'Admin'}</p>
-            <p className="text-white/35 text-[11px] truncate">{user?.email}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-white text-[13px] font-medium truncate flex-1">{admin?.name || 'Admin'}</p>
+              {isSuperAdmin && <ShieldCheck size={13} className="text-[#E8A838] shrink-0" />}
+            </div>
+            <p className="text-white/35 text-[11px] truncate">{admin?.email}</p>
           </div>
 
           {/* Theme toggle */}

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Layout from './components/Layout'
 import AdminLayout from './components/AdminLayout'
@@ -17,38 +18,75 @@ import AdminUsers from './pages/AdminUsers'
 import AdminUserDetail from './pages/AdminUserDetail'
 import AdminAnalytics from './pages/AdminAnalytics'
 import AdminSettings from './pages/AdminSettings'
+import AdminLogin from './pages/AdminLogin'
+import AdminTeam from './pages/AdminTeam'
 import Integrations from './pages/Integrations'
 import UserSettings from './pages/UserSettings'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import LandingPage from './pages/LandingPage'
 
+// ── Detect admin subdomain ───────────────────────────────────────────────────
+const isAdminSubdomain = () => {
+  const h = window.location.hostname
+  return h === 'admin.archicrm.ma' || h.startsWith('admin.')
+}
+
 // ── Public-only pages (bypass auth loading entirely) ─────────────────────────
 const PUBLIC_PATHS = ['/landing', '/privacy', '/terms']
 
-// CRM routes — only for non-admin users
+// ── CRM routes (non-admin users) ─────────────────────────────────────────────
 function CRMRoute({ children }) {
   const { user, token, loading } = useAuth()
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="text-gray-400 text-sm">Chargement…</div></div>
   if (!token) return <Navigate to="/landing" replace />
-  if (user?.role === 'admin') return <Navigate to="/admin" replace />
+  if (user?.role === 'admin') return <Navigate to="/landing" replace />
   return <Layout>{children}</Layout>
 }
 
-// Admin routes — only for admin users
-function AdminRoute({ children }) {
-  const { user, token, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-[#0f1117] flex items-center justify-center"><div className="text-gray-400 text-sm">Chargement…</div></div>
-  if (!token) return <Navigate to="/landing" replace />
-  if (user?.role !== 'admin') return <Navigate to="/" replace />
+// ── Admin panel routes (admin_users) ─────────────────────────────────────────
+function AdminRoute({ children, requireSuperAdmin = false, requirePermission = null }) {
+  const { admin, token, loading } = useAdminAuth()
+  if (loading) return <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center"><div className="text-gray-400 text-sm">Chargement…</div></div>
+  if (!token) return <Navigate to="/login" replace />
+  if (requireSuperAdmin && admin?.role !== 'superadmin') return <Navigate to="/" replace />
+  if (requirePermission && admin?.role !== 'superadmin' && !admin?.permissions?.[requirePermission]) {
+    return <Navigate to="/" replace />
+  }
   return <AdminLayout>{children}</AdminLayout>
 }
 
-function AppRoutes() {
+// ── Admin subdomain app ───────────────────────────────────────────────────────
+function AdminAppRoutes() {
+  const { admin, token, loading } = useAdminAuth()
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <div className="text-gray-400 text-sm">Chargement…</div>
+    </div>
+  )
+
+  return (
+    <Routes>
+      <Route path="/login"
+        element={token ? <Navigate to="/" replace /> : <AdminLogin />}
+      />
+      <Route path="/"             element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/users"        element={<AdminRoute requirePermission="users"><AdminUsers /></AdminRoute>} />
+      <Route path="/users/:id"    element={<AdminRoute requirePermission="users"><AdminUserDetail /></AdminRoute>} />
+      <Route path="/analytics"    element={<AdminRoute requirePermission="analytics"><AdminAnalytics /></AdminRoute>} />
+      <Route path="/settings"     element={<AdminRoute requirePermission="settings"><AdminSettings /></AdminRoute>} />
+      <Route path="/team"         element={<AdminRoute requireSuperAdmin><AdminTeam /></AdminRoute>} />
+      <Route path="*"             element={<Navigate to={token ? '/' : '/login'} replace />} />
+    </Routes>
+  )
+}
+
+// ── CRM subdomain app ─────────────────────────────────────────────────────────
+function CRMAppRoutes() {
   const { user, token, loading } = useAuth()
   const { pathname } = useLocation()
 
-  // ── Public pages: render immediately, no auth dependency ─────────────────
   if (PUBLIC_PATHS.includes(pathname)) {
     return (
       <Routes>
@@ -59,7 +97,6 @@ function AppRoutes() {
     )
   }
 
-  // ── For everything else, wait for auth to resolve ─────────────────────────
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0f1117]">
       <div className="text-gray-400 text-sm">Chargement…</div>
@@ -68,15 +105,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Auth pages — redirect to app if already logged in */}
       <Route path="/login"
-        element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Login />}
+        element={token ? <Navigate to={user?.role === 'admin' ? '/landing' : '/'} replace /> : <Login />}
       />
       <Route path="/signup"
-        element={token ? <Navigate to={user?.role === 'admin' ? '/admin' : '/'} replace /> : <Signup />}
+        element={token ? <Navigate to={user?.role === 'admin' ? '/landing' : '/'} replace /> : <Signup />}
       />
 
-      {/* CRM — user only */}
       <Route path="/"            element={<CRMRoute><Dashboard /></CRMRoute>} />
       <Route path="/leads"       element={<CRMRoute><Leads /></CRMRoute>} />
       <Route path="/clients"     element={<CRMRoute><Clients /></CRMRoute>} />
@@ -87,27 +122,27 @@ function AppRoutes() {
       <Route path="/integrations" element={<CRMRoute><Integrations /></CRMRoute>} />
       <Route path="/settings"    element={<CRMRoute><UserSettings /></CRMRoute>} />
 
-      {/* Admin panel — admin only */}
-      <Route path="/admin"               element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-      <Route path="/admin/users"         element={<AdminRoute><AdminUsers /></AdminRoute>} />
-      <Route path="/admin/users/:id"     element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
-      <Route path="/admin/analytics"     element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
-      <Route path="/admin/settings"      element={<AdminRoute><AdminSettings /></AdminRoute>} />
-
-      {/* Catch-all: unauthenticated → landing, authenticated → app home */}
       <Route path="*"
-        element={<Navigate to={token ? (user?.role === 'admin' ? '/admin' : '/') : '/landing'} replace />}
+        element={<Navigate to={token ? '/' : '/landing'} replace />}
       />
     </Routes>
   )
 }
 
 export default function App() {
+  const adminMode = isAdminSubdomain()
+
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      {adminMode ? (
+        <AdminAuthProvider>
+          <AdminAppRoutes />
+        </AdminAuthProvider>
+      ) : (
+        <AuthProvider>
+          <CRMAppRoutes />
+        </AuthProvider>
+      )}
     </ThemeProvider>
   )
 }

@@ -158,6 +158,20 @@ BEGIN
     (karim_id, lead1, client1, 'Client gagné',       'Mehdi Laaroussi converti en client – 750 000 DH');
 END $$;
 
+-- ============================================================
+-- ADMIN USERS (separate from CRM users)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'team_member' CHECK (role IN ('superadmin', 'team_member')),
+  permissions JSONB NOT NULL DEFAULT '{"users": false, "analytics": false, "settings": false}',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Seed leads for Sara
 DO $$
 DECLARE

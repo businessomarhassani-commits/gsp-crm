@@ -100,8 +100,9 @@ export default function AdminUsers() {
   const handleImpersonate = async (user) => {
     try {
       const { data } = await api.post(`/api/admin/impersonate/${user.id}`)
-      // Pass token via URL — the new tab's AuthContext will pick it up and store in sessionStorage
-      window.open(`/?impersonate=${encodeURIComponent(data.token)}`, '_blank')
+      // Open CRM app on the app subdomain (or same host in local dev)
+      const crmBase = window.location.hostname === 'admin.archicrm.ma' ? 'https://app.archicrm.ma' : ''
+      window.open(`${crmBase}/?impersonate=${encodeURIComponent(data.token)}`, '_blank')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur impersonation')
     }

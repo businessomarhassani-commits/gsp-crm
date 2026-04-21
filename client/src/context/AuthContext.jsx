@@ -68,10 +68,13 @@ export function AuthProvider({ children }) {
     setIsImpersonating(false)
     setToken(null)
     setUser(null)
-    // Close this tab if opened as impersonation; otherwise navigate admin
+    // Close this tab (it was opened via window.open from the admin panel)
     window.close()
-    // Fallback if window.close() doesn't work (same tab)
-    setTimeout(() => { window.location.href = '/admin/users' }, 200)
+    // Fallback if window.close() doesn't work — go to admin subdomain
+    const adminBase = window.location.hostname === 'app.archicrm.ma'
+      ? 'https://admin.archicrm.ma'
+      : ''
+    setTimeout(() => { window.location.href = `${adminBase}/users` }, 200)
   }
 
   return (

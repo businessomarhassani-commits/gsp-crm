@@ -3,11 +3,10 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { v4: uuidv4 } = require('uuid')
 const supabase = require('../db')
-const { auth } = require('../middleware/auth')
-const requireAdmin = require('../middleware/requireAdmin')
+const adminAuth = require('../middleware/adminAuth')
 const router = express.Router()
 
-router.use(auth, requireAdmin)
+router.use(adminAuth)
 
 // GET /api/admin/stats
 router.get('/stats', async (req, res) => {
@@ -150,7 +149,7 @@ router.put('/users/:id/suspend', async (req, res) => {
 
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', async (req, res) => {
-  if (req.params.id === req.user.id) return res.status(400).json({ error: 'Impossible de supprimer votre propre compte' })
+  if (req.params.id === req.adminUser.id) return res.status(400).json({ error: 'Impossible de supprimer votre propre compte' })
   const { error } = await supabase.from('users').delete().eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
   res.json({ success: true })
@@ -181,9 +180,6 @@ router.delete('/users/:id/reject', async (req, res) => {
 
 // POST /api/admin/impersonate/:userId — generate short-lived impersonation token
 router.post('/impersonate/:userId', async (req, res) => {
-  if (req.params.userId === req.user.id) {
-    return res.status(400).json({ error: 'Impossible de vous impersonner vous-même' })
-  }
   const { data: target } = await supabase
     .from('users')
     .select('id, name, email, role')
@@ -193,7 +189,7 @@ router.post('/impersonate/:userId', async (req, res) => {
   if (target.role === 'admin') return res.status(403).json({ error: 'Impossible d\'impersonner un administrateur' })
 
   const token = jwt.sign(
-    { userId: target.id, impersonatedBy: req.user.id, isImpersonation: true },
+    { userId: target.id, impersonatedBy: req.adminUser.id, isImpersonation: true },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   )

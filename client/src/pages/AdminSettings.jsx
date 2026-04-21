@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAdminAuth } from '../context/AdminAuthContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 
 export default function AdminSettings() {
-  const { user, setUser } = useAuth()
+  const { admin, setAdmin } = useAdminAuth()
   const [form, setForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: admin?.name || '',
+    email: admin?.email || '',
     password: '',
     confirm: '',
   })
@@ -25,8 +25,8 @@ export default function AdminSettings() {
     try {
       const body = { name: form.name, email: form.email }
       if (form.password) body.password = form.password
-      const { data } = await api.put('/api/auth/profile', body)
-      setUser(data)
+      const { data } = await api.put('/api/admin/profile', body)
+      setAdmin(prev => ({ ...prev, ...data }))
       toast.success('Profil mis à jour avec succès')
       setForm(f => ({ ...f, password: '', confirm: '' }))
     } catch (err) {
@@ -108,7 +108,7 @@ export default function AdminSettings() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors"
+              className="bg-[#E8A838] hover:bg-[#d4962e] disabled:opacity-50 text-[#0A0A0A] font-bold text-sm px-6 py-2.5 rounded-xl transition-colors"
             >
               {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
             </button>

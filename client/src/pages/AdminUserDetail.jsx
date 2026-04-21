@@ -26,7 +26,7 @@ export default function AdminUserDetail() {
       setLoading(false)
     }).catch(() => {
       toast.error('Utilisateur introuvable')
-      navigate('/admin/users')
+      navigate('/users')
     })
   }, [id, navigate])
 
@@ -53,7 +53,7 @@ export default function AdminUserDetail() {
     <div className="space-y-6 max-w-5xl">
       {/* Back */}
       <button
-        onClick={() => navigate('/admin/users')}
+        onClick={() => navigate('/users')}
         className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
