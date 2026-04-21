@@ -6,6 +6,10 @@ import {
   Globe, Clock, MessageCircle,
 } from 'lucide-react'
 import Logo from '../components/Logo'
+import {
+  dashboardImg, leadsImg, pipelineImg,
+  financeImg, rappelsImg, clientsImg,
+} from '../assets/screenshotImages'
 
 const APP_URL = 'https://app.archicrm.ma'
 
@@ -141,42 +145,42 @@ function FAQItem({ question, answer }) {
 // ─── Product Preview ─────────────────────────────────────────────────────────
 const PREVIEW_ROWS = [
   {
-    img: 'dashboard.png',
+    img: dashboardImg,
     alt: 'Tableau de bord ArchiCRM',
     title: 'Tout votre activité en un seul écran',
     desc: "Chiffre d'affaires, leads du mois, taux de conversion — tout est visible dès que vous ouvrez ArchiCRM. Fini les tableaux Excel éparpillés.",
     imgRight: true,
   },
   {
-    img: 'leads.png',
+    img: leadsImg,
     alt: 'Gestion des leads ArchiCRM',
     title: 'Ne perdez plus jamais un prospect',
     desc: "Chaque lead est enregistré, suivi et classé. Vous savez exactement où en est chaque contact : nouveau, contacté, en rendez-vous ou proposition envoyée.",
     imgRight: false,
   },
   {
-    img: 'pipeline.png',
+    img: pipelineImg,
     alt: 'Pipeline Kanban ArchiCRM',
     title: "Visualisez vos projets d'un coup d'œil",
     desc: "Un tableau visuel qui vous montre où se trouve chaque projet. Faites glisser vos leads d'une étape à l'autre en un clic.",
     imgRight: true,
   },
   {
-    img: 'finance.png',
+    img: financeImg,
     alt: 'Finance ArchiCRM',
     title: "Suivez votre chiffre d'affaires facilement",
     desc: "Consultez vos revenus mois par mois, vos meilleures affaires et votre performance globale. Prenez de meilleures décisions pour votre cabinet.",
     imgRight: false,
   },
   {
-    img: 'rappels.png',
+    img: rappelsImg,
     alt: 'Rappels ArchiCRM',
     title: 'Plus jamais un rendez-vous oublié',
     desc: "Créez des rappels pour vos relances, rendez-vous et suivis clients. ArchiCRM vous alerte avant qu'il ne soit trop tard.",
     imgRight: true,
   },
   {
-    img: 'clients.png',
+    img: clientsImg,
     alt: 'Clients ArchiCRM',
     title: 'Tous vos clients dans un seul endroit',
     desc: "Accédez en un clic à l'historique complet de chaque client : projets, contacts, valeur, notes. Un vrai carnet d'adresses professionnel.",
@@ -203,7 +207,7 @@ function ProductPreview() {
         {/* Alternating rows */}
         <div className="space-y-20 sm:space-y-28">
           {PREVIEW_ROWS.map(({ img, alt, title, desc, imgRight }, i) => (
-            <FadeIn key={img} delay={80}>
+            <FadeIn key={alt} delay={80}>
               <div
                 className={`flex flex-col ${
                   imgRight ? 'sm:flex-row' : 'sm:flex-row-reverse'
@@ -214,7 +218,7 @@ function ProductPreview() {
                   <div className="relative">
                     <div className="absolute -inset-4 bg-[#E8A838]/[0.06] rounded-3xl blur-2xl pointer-events-none" />
                     <img
-                      src={`/screenshots/${img}`}
+                      src={img}
                       alt={alt}
                       className="relative w-full h-auto rounded-xl border border-[#E8A838]/20 shadow-2xl shadow-black/70 block"
                     />
