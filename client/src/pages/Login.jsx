@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import Logo from '../components/Logo'
+import { AlertTriangle } from 'lucide-react'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const sessionError = new URLSearchParams(location.search).get('session_error')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,6 +38,14 @@ export default function Login() {
             <span className="text-white">Archi</span><span className="text-[#E8A838]">CRM</span>
           </span>
         </div>
+
+        {/* Session error banner */}
+        {sessionError && (
+          <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/25 text-red-400 text-[12px] rounded-xl px-4 py-3 mb-4">
+            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+            <span>Session invalide — veuillez vous reconnecter avec votre compte utilisateur.</span>
+          </div>
+        )}
 
         <div className="bg-[#111111] border border-white/[0.08] rounded-2xl p-7">
           <h1 className="text-white font-bold text-[18px] mb-1">Connexion</h1>

@@ -3,11 +3,30 @@ import api from '../utils/api'
 
 const AuthContext = createContext(null)
 
+// Decode JWT payload without a library
+function decodeJwt(token) {
+  try {
+    const payload = token.split('.')[1]
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+  } catch {
+    return null
+  }
+}
+
+// Wipe every auth key from storage
+function clearAllAuth() {
+  localStorage.removeItem('archicrm_token')
+  localStorage.removeItem('archicrm_admin_token')
+  sessionStorage.removeItem('archicrm_impersonation_token')
+  delete api.defaults.headers.common['Authorization']
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isImpersonating, setIsImpersonating] = useState(false)
+  const [authError, setAuthError] = useState(null)   // 'invalid_admin_token' | null
 
   useEffect(() => {
     // Check for impersonation token from URL (?impersonate=TOKEN), sessionStorage, or regular localStorage
@@ -24,18 +43,32 @@ export function AuthProvider({ children }) {
     const stored = impToken || regularToken
 
     if (stored) {
+      // ── Guard: reject admin tokens on the user CRM ────────────────────────
+      const decoded = decodeJwt(stored)
+      if (decoded?.adminUserId || decoded?.role === 'superadmin') {
+        clearAllAuth()
+        setAuthError('invalid_admin_token')
+        setLoading(false)
+        return
+      }
+
       api.defaults.headers.common['Authorization'] = `Bearer ${stored}`
       api.get('/api/auth/me')
         .then(res => {
-          setUser(res.data)
+          const userData = res.data
+          // Double-check: server should never return an admin user here
+          if (userData?.role === 'superadmin') {
+            clearAllAuth()
+            setAuthError('invalid_admin_token')
+            return
+          }
+          setUser(userData)
           setToken(stored)
           setIsImpersonating(!!impToken)
         })
         .catch(() => {
           // Token invalid or expired — clear everything
-          localStorage.removeItem('archicrm_token')
-          sessionStorage.removeItem('archicrm_impersonation_token')
-          delete api.defaults.headers.common['Authorization']
+          clearAllAuth()
           setToken(null)
           setUser(null)
           setIsImpersonating(false)
@@ -55,12 +88,11 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('archicrm_token')
-    sessionStorage.removeItem('archicrm_impersonation_token')
-    delete api.defaults.headers.common['Authorization']
+    clearAllAuth()
     setToken(null)
     setUser(null)
     setIsImpersonating(false)
+    setAuthError(null)
   }
 
   const exitImpersonation = () => {
@@ -78,7 +110,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, login, logout, loading, isImpersonating, exitImpersonation }}>
+    <AuthContext.Provider value={{ user, setUser, token, login, logout, loading, isImpersonating, exitImpersonation, authError }}>
       {children}
     </AuthContext.Provider>
   )

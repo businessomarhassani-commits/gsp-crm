@@ -20,6 +20,7 @@ import AdminAnalytics from './pages/AdminAnalytics'
 import AdminSettings from './pages/AdminSettings'
 import AdminLogin from './pages/AdminLogin'
 import AdminTeam from './pages/AdminTeam'
+import AdminLandingEditor from './pages/AdminLandingEditor'
 import Integrations from './pages/Integrations'
 import UserSettings from './pages/UserSettings'
 import Privacy from './pages/Privacy'
@@ -69,17 +70,20 @@ function LandingAppRoutes() {
 
 // Protects CRM pages — unauthenticated → back to login (/)
 function CRMRoute({ children }) {
-  const { user, token, loading } = useAuth()
+  const { user, token, loading, authError } = useAuth()
   if (loading) return <Loader />
+  if (authError === 'invalid_admin_token') return <Navigate to="/?session_error=1" replace />
   if (!token) return <Navigate to="/" replace />
   if (user?.role === 'admin') return <Navigate to="/" replace />
   return <Layout>{children}</Layout>
 }
 
 function CRMAppRoutes() {
-  const { token, loading } = useAuth()
+  const { token, loading, authError } = useAuth()
 
   if (loading) return <Loader />
+  // Admin token detected — send to login with error message, no loop
+  if (authError === 'invalid_admin_token' && !token) return <Navigate to="/?session_error=1" replace />
 
   return (
     <Routes>
