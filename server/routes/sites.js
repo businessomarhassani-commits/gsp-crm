@@ -12,6 +12,16 @@ function slugify(str) {
     .replace(/^-+|-+$/g, '')
 }
 
+// Always strip markdown code fences — unconditional, runs all three replaces
+function stripFences(raw = '') {
+  return raw
+    .trim()
+    .replace(/^```html\s*/i, '')   // leading ```html
+    .replace(/^```\s*/i, '')        // leading ``` (if no 'html' tag)
+    .replace(/```\s*$/i, '')        // trailing ```
+    .trim()
+}
+
 // ─── GET /api/sites/my-data — architect data for prompt pre-fill ─────────────
 router.get('/my-data', auth, async (req, res) => {
   try {
@@ -23,20 +33,15 @@ router.get('/my-data', auth, async (req, res) => {
       { data: clients },
     ] = await Promise.all([
       supabase.from('users').select('id, name, email, api_key, created_at').eq('id', uid).single(),
-      supabase.from('leads').select('project_type, city, status'),
-      supabase.from('clients').select('id'),
+      supabase.from('leads').select('project_type, city, status').eq('user_id', uid),
+      supabase.from('clients').select('id').eq('user_id', uid),
     ])
 
-    // Aggregate lead data
     const leadsCount = leads?.length || 0
     const wonCount = leads?.filter(l => l.status === 'Gagné').length || 0
 
-    const projectTypesRaw = leads?.map(l => l.project_type).filter(Boolean)
-    const projectTypes = [...new Set(projectTypesRaw)].slice(0, 4)
-
-    const citiesRaw = leads?.map(l => l.city).filter(Boolean)
-    const cities = [...new Set(citiesRaw)].slice(0, 3)
-
+    const projectTypes = [...new Set(leads?.map(l => l.project_type).filter(Boolean))].slice(0, 4)
+    const cities = [...new Set(leads?.map(l => l.city).filter(Boolean))].slice(0, 3)
     const clientsCount = clients?.length || 0
 
     res.json({
@@ -57,35 +62,64 @@ router.get('/my-data', auth, async (req, res) => {
   }
 })
 
-// ─── POST /api/sites/generate — call Anthropic Claude ───────────────────────
+// ─── POST /api/sites/generate — call Anthropic Claude ────────────────────────
 router.post('/generate', auth, async (req, res) => {
-  try {
-    const { prompt } = req.body
-    if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt requis' })
+  const { prompt } = req.body
+  if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt requis' })
 
-    const Anthropic = require('@anthropic-ai/sdk')
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 8000,
-      system: `You are an expert web developer specializing in beautiful, conversion-optimized websites for Moroccan architecture firms. Generate complete, self-contained HTML files with embedded CSS and JavaScript. Use modern design: dark elegant style with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. All text in French. Make it look premium and professional. Return ONLY the complete HTML code, nothing else, no explanations.`,
-      messages: [{ role: 'user', content: prompt }],
-    })
-
-    let html = message.content[0]?.text || ''
-
-    // Strip markdown code fences if Claude wrapped the HTML (e.g. ```html ... ```)
-    html = html.trim()
-    if (html.startsWith('```')) {
-      html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
-    }
-
-    res.json({ html })
-  } catch (err) {
-    console.error('sites/generate error:', err)
-    res.status(500).json({ error: 'Erreur lors de la génération du site' })
+  // Guard: API key must be configured
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.error('[sites/generate] ANTHROPIC_API_KEY is not set')
+    return res.status(500).json({ error: 'Clé API Anthropic non configurée. Contactez l\'administrateur.' })
   }
+
+  let anthropic
+  try {
+    const Anthropic = require('@anthropic-ai/sdk')
+    anthropic = new Anthropic({ apiKey })
+  } catch (initErr) {
+    console.error('[sites/generate] Failed to init Anthropic SDK:', initErr.message)
+    return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
+  }
+
+  // Try claude-opus-4-5 first, fall back to claude-sonnet-4-5
+  const MODELS = ['claude-opus-4-5', 'claude-sonnet-4-5']
+  let lastErr = null
+
+  for (const model of MODELS) {
+    try {
+      console.log(`[sites/generate] Trying model: ${model}`)
+      const message = await anthropic.messages.create({
+        model,
+        max_tokens: 8000,
+        system: `You are an expert web developer specializing in beautiful, conversion-optimized websites for Moroccan architecture firms. Generate complete, self-contained HTML files with embedded CSS and JavaScript. Use modern design: dark elegant style with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. All text in French. Make it look premium and professional. Return ONLY the complete HTML code, nothing else, no explanations, no markdown.`,
+        messages: [{ role: 'user', content: prompt }],
+      })
+
+      const html = stripFences(message.content[0]?.text || '')
+      console.log(`[sites/generate] Success with ${model}, html length: ${html.length}`)
+      return res.json({ html, model })
+    } catch (err) {
+      lastErr = err
+      const status = err.status || err.statusCode
+      console.error(`[sites/generate] Model ${model} failed — status:${status} type:${err.error?.type} msg:${err.message}`)
+
+      // Only try the next model if this one was genuinely not found
+      if (status !== 404 && err.error?.type !== 'not_found_error') break
+    }
+  }
+
+  // Both models failed — return the real error to the frontend
+  const status = lastErr?.status || lastErr?.statusCode || 500
+  const userMessage = lastErr?.error?.type === 'authentication_error'
+    ? 'Clé API Anthropic invalide. Vérifiez la configuration.'
+    : lastErr?.error?.type === 'not_found_error'
+    ? 'Modèle Claude non disponible. Contactez l\'administrateur.'
+    : lastErr?.error?.message || lastErr?.message || 'Erreur lors de la génération du site'
+
+  console.error('[sites/generate] All models failed. Last error:', lastErr?.message)
+  return res.status(status >= 400 && status < 600 ? status : 500).json({ error: userMessage })
 })
 
 // ─── POST /api/sites/publish — save to Supabase ──────────────────────────────
@@ -97,13 +131,9 @@ router.post('/publish', auth, async (req, res) => {
     if (!html || !type || !slug) return res.status(400).json({ error: 'Données manquantes' })
     if (!['vitrine', 'landing'].includes(type)) return res.status(400).json({ error: 'Type invalide' })
 
-    // Strip markdown fences in case the frontend sends raw Claude output
-    let cleanHtml = html.trim()
-    if (cleanHtml.startsWith('```')) {
-      cleanHtml = cleanHtml.replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
-    }
+    // Always strip fences before saving — regardless of where the HTML came from
+    const cleanHtml = stripFences(html)
 
-    // Upsert — one record per (user_id, type)
     const { error } = await supabase.from('architect_sites').upsert(
       { user_id: uid, slug, type, html_content: cleanHtml, published_at: new Date().toISOString(), is_active: true },
       { onConflict: 'user_id,type' }
@@ -150,7 +180,7 @@ router.get('/published', auth, async (req, res) => {
   }
 })
 
-// ─── GET /api/sites/serve/:slug/:type — PUBLIC: serve site HTML ───────────────
+// ─── GET /api/sites/serve/:slug/:type — PUBLIC: serve cleaned HTML ───────────
 router.get('/serve/:slug/:type', async (req, res) => {
   try {
     const { slug, type } = req.params
@@ -162,11 +192,15 @@ router.get('/serve/:slug/:type', async (req, res) => {
       .eq('is_active', true)
       .single()
 
-    if (error || !data) return res.status(404).send('<html><body><h1>Site non trouvé</h1></body></html>')
+    if (error || !data) return res.status(404).send('<html><body style="background:#0A0A0A;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><h1 style="color:#E8A838">Site non trouvé</h1></body></html>')
+
+    // Strip fences from any records saved before this fix
+    const html = stripFences(data.html_content)
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.send(data.html_content)
+    res.send(html)
   } catch (err) {
-    res.status(500).send('<html><body><h1>Erreur serveur</h1></body></html>')
+    console.error('sites/serve error:', err)
+    res.status(500).send('<html><body style="background:#0A0A0A;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><h1>Erreur serveur</h1></body></html>')
   }
 })
 
