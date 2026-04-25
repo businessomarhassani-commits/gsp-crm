@@ -17,11 +17,12 @@ import {
 } from 'lucide-react'
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { user, logout } = useAuth()
+  const { user, logout, isImpersonating } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
+  // Show admin features if user has admin role OR if an admin is currently impersonating this account
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin' || isImpersonating
 
   const NAV = [
     { to: '/dashboard',  label: 'Tableau de bord', Icon: LayoutDashboard, end: true },

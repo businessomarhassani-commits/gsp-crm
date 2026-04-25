@@ -71,12 +71,14 @@ function LandingAppRoutes() {
 
 // Protects CRM pages — unauthenticated → back to login (/)
 function CRMRoute({ children, adminOnly = false }) {
-  const { user, token, loading, authError } = useAuth()
+  const { user, token, loading, authError, isImpersonating } = useAuth()
   if (loading) return <Loader />
   if (authError === 'invalid_admin_token') return <Navigate to="/?session_error=1" replace />
   if (!token) return <Navigate to="/" replace />
-  // adminOnly routes require role admin or superadmin
-  if (adminOnly && user?.role !== 'admin' && user?.role !== 'superadmin') return <Navigate to="/dashboard" replace />
+  // adminOnly routes: allow if user has admin role OR if an admin is impersonating this account
+  if (adminOnly && user?.role !== 'admin' && user?.role !== 'superadmin' && !isImpersonating) {
+    return <Navigate to="/dashboard" replace />
+  }
   return <Layout>{children}</Layout>
 }
 
