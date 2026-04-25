@@ -73,7 +73,14 @@ router.post('/generate', auth, async (req, res) => {
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const html = message.content[0]?.text || ''
+    let html = message.content[0]?.text || ''
+
+    // Strip markdown code fences if Claude wrapped the HTML (e.g. ```html ... ```)
+    html = html.trim()
+    if (html.startsWith('```')) {
+      html = html.replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+    }
+
     res.json({ html })
   } catch (err) {
     console.error('sites/generate error:', err)
@@ -90,9 +97,15 @@ router.post('/publish', auth, async (req, res) => {
     if (!html || !type || !slug) return res.status(400).json({ error: 'Données manquantes' })
     if (!['vitrine', 'landing'].includes(type)) return res.status(400).json({ error: 'Type invalide' })
 
+    // Strip markdown fences in case the frontend sends raw Claude output
+    let cleanHtml = html.trim()
+    if (cleanHtml.startsWith('```')) {
+      cleanHtml = cleanHtml.replace(/^```(?:html)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+    }
+
     // Upsert — one record per (user_id, type)
     const { error } = await supabase.from('architect_sites').upsert(
-      { user_id: uid, slug, type, html_content: html, published_at: new Date().toISOString(), is_active: true },
+      { user_id: uid, slug, type, html_content: cleanHtml, published_at: new Date().toISOString(), is_active: true },
       { onConflict: 'user_id,type' }
     )
     if (error) throw error

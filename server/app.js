@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') })
 const express = require('express')
 const cors = require('cors')
+const supabase = require('./db')
 
 const authRoutes = require('./routes/auth')
 const leadRoutes = require('./routes/leads')
@@ -31,6 +32,87 @@ app.use(express.json({
     req.rawBody = buf
   }
 }))
+
+// ── Wildcard subdomain routing — MUST be before all API routes ────────────────
+// Handles {slug}.archicrm.ma → serves architect site HTML from Supabase
+app.use(async (req, res, next) => {
+  const host = req.headers.host || ''
+
+  // Only act on *.archicrm.ma requests
+  const match = host.match(/^([^.]+)\.archicrm\.ma(?::\d+)?$/)
+  if (!match) return next()
+
+  const subdomain = match[1]
+
+  // Skip reserved subdomains — let them fall through to normal routing
+  const reserved = ['www', 'app', 'admin', 'api', 'archicrm', '']
+  if (reserved.includes(subdomain)) return next()
+
+  // /landing path → landing page type; everything else → vitrine
+  const type = req.path === '/landing' ? 'landing' : 'vitrine'
+
+  try {
+    // Try exact type first
+    const { data } = await supabase
+      .from('architect_sites')
+      .select('html_content')
+      .eq('slug', subdomain)
+      .eq('is_active', true)
+      .eq('type', type)
+      .single()
+
+    if (data?.html_content) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8')
+      return res.send(data.html_content)
+    }
+
+    // Fallback: try any active site for this slug (regardless of type)
+    const { data: fallback } = await supabase
+      .from('architect_sites')
+      .select('html_content')
+      .eq('slug', subdomain)
+      .eq('is_active', true)
+      .limit(1)
+      .single()
+
+    if (fallback?.html_content) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8')
+      return res.send(fallback.html_content)
+    }
+
+    // 404 — styled ArchiCRM page
+    return res.status(404).send(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site non trouvé — ArchiCRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0A0A0A; color: #fff; font-family: Inter, sans-serif;
+           display: flex; align-items: center; justify-content: center;
+           min-height: 100vh; flex-direction: column; gap: 16px; padding: 24px; text-align: center; }
+    h1 { color: #E8A838; font-size: 2rem; font-weight: 700; }
+    p  { color: #888; font-size: 1rem; line-height: 1.6; }
+    a  { display: inline-block; margin-top: 8px; color: #E8A838; text-decoration: none;
+         border: 1px solid #E8A838; padding: 10px 24px; border-radius: 8px; font-weight: 600;
+         transition: background 0.15s; }
+    a:hover { background: #E8A838; color: #0A0A0A; }
+  </style>
+</head>
+<body>
+  <h1>Site non trouvé</h1>
+  <p>Ce site n'existe pas encore ou n'a pas encore été publié.</p>
+  <a href="https://archicrm.ma">← Retour à ArchiCRM</a>
+</body>
+</html>`)
+  } catch (err) {
+    console.error('[subdomain] routing error:', err.message)
+    return next()
+  }
+})
 
 // Routes
 app.use('/api/auth', authRoutes)
