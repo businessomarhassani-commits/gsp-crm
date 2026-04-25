@@ -87,7 +87,7 @@ function useVoiceRecorder(onResult) {
     }
     rec.onerror = () => {
       const next = idx + 1
-      if (next < LANGS.length) tryLang(next) else { setRecording(false); setStatusMsg('') }
+      if (next < LANGS.length) { tryLang(next) } else { setRecording(false); setStatusMsg('') }
     }
     rec.onend = () => {
       if (!final && triedRef.current < LANGS.length - 1) { triedRef.current++; tryLang(triedRef.current) }
