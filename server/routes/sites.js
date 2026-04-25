@@ -122,6 +122,50 @@ router.post('/generate', auth, async (req, res) => {
   return res.status(status >= 400 && status < 600 ? status : 500).json({ error: userMessage })
 })
 
+// ─── POST /api/sites/modify — AI-edit existing HTML ──────────────────────────
+router.post('/modify', auth, async (req, res) => {
+  const { html, instruction } = req.body
+  if (!html || !instruction?.trim()) return res.status(400).json({ error: 'Données manquantes' })
+
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return res.status(500).json({ error: 'Clé API Anthropic non configurée.' })
+
+  let anthropic
+  try {
+    const Anthropic = require('@anthropic-ai/sdk')
+    anthropic = new Anthropic({ apiKey })
+  } catch (initErr) {
+    return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
+  }
+
+  const MODELS = ['claude-opus-4-5', 'claude-sonnet-4-5']
+  let lastErr = null
+
+  for (const model of MODELS) {
+    try {
+      console.log(`[sites/modify] Trying model: ${model}`)
+      const message = await anthropic.messages.create({
+        model,
+        max_tokens: 8000,
+        system: `You are editing an existing HTML website. The user will describe a change. Apply ONLY the requested change to the HTML and return the complete updated HTML. Preserve all existing content, styles, and structure not mentioned in the change. Return ONLY the complete HTML code, nothing else, no explanations, no markdown fences.`,
+        messages: [{ role: 'user', content: `Current HTML:\n${html}\n\nChange requested: ${instruction}` }],
+      })
+      const updatedHtml = stripFences(message.content[0]?.text || '')
+      console.log(`[sites/modify] Success with ${model}, length: ${updatedHtml.length}`)
+      return res.json({ html: updatedHtml, model })
+    } catch (err) {
+      lastErr = err
+      const status = err.status || err.statusCode
+      console.error(`[sites/modify] Model ${model} failed — status:${status} msg:${err.message}`)
+      if (status !== 404 && err.error?.type !== 'not_found_error') break
+    }
+  }
+
+  const status = lastErr?.status || 500
+  const userMessage = lastErr?.error?.message || lastErr?.message || 'Erreur lors de la modification'
+  return res.status(status >= 400 && status < 600 ? status : 500).json({ error: userMessage })
+})
+
 // ─── POST /api/sites/publish — save to Supabase ──────────────────────────────
 router.post('/publish', auth, async (req, res) => {
   try {
