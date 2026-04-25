@@ -3,11 +3,45 @@ import { useAuth } from '../context/AuthContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import {
-  Globe, Mic, MicOff, Wand2, ExternalLink, Send, Settings,
-  Loader2, CheckCircle, RefreshCw, Eye, EyeOff, Trash2, Plus,
-  ChevronUp, ChevronDown, Sparkles, Palette, Type, X, Check,
-  Copy, Monitor,
+  Globe, Mic, MicOff, Wand2, ExternalLink, Send, Settings, Loader2,
+  CheckCircle, RefreshCw, ChevronDown, ChevronUp, Plus, X, Check,
+  Copy, Monitor, Smartphone, Tablet, Sparkles,
 } from 'lucide-react'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const PALETTES = [
+  { id: 1, name: 'Prestige Noir & Or',  bg: '#0A0A0A', accent: '#E8A838', text: '#FFFFFF' },
+  { id: 2, name: 'Blanc Minimaliste',   bg: '#FFFFFF', accent: '#1A1A1A', text: '#333333' },
+  { id: 3, name: 'Bleu Marine Pro',     bg: '#0D1B2A', accent: '#4A90D9', text: '#FFFFFF' },
+  { id: 4, name: 'Sable & Terre',       bg: '#F5F0E8', accent: '#8B6914', text: '#2C1810' },
+  { id: 5, name: 'Vert Olive Luxe',     bg: '#1C2016', accent: '#8B9E4A', text: '#FFFFFF' },
+  { id: 6, name: 'Gris Anthracite',     bg: '#2C2C2C', accent: '#C0C0C0', text: '#FFFFFF' },
+  { id: 7, name: 'Bordeaux Élégant',    bg: '#1A0A0A', accent: '#8B1A1A', text: '#F5E6E0' },
+  { id: 8, name: 'Blanc & Or Rose',     bg: '#FAF7F2', accent: '#C9956C', text: '#2C2416' },
+]
+
+const DEVICE_WIDTHS = { desktop: '100%', tablet: '768px', mobile: '375px' }
+const VOICE_LANGS   = ['ar-MA', 'fr-FR', 'en-US']
+
+const MODIFY_CHIPS = [
+  'Rends le hero plus accrocheur',
+  'Ajoute plus de sections',
+  'Texte plus court',
+  'Ajoute des témoignages',
+  'Change le style',
+]
+
+const DEFAULT_PRESET_QUESTIONS = [
+  { id: 'name',         label: 'Nom complet',                    type: 'text',   required: true,  locked: true,  enabled: true,  options: [] },
+  { id: 'phone',        label: 'Numéro de téléphone',            type: 'tel',    required: true,  locked: true,  enabled: true,  options: [] },
+  { id: 'project_type', label: 'Type de projet',                 type: 'select', required: true,  locked: false, enabled: true,  options: ['Résidentiel', 'Commercial', 'Rénovation', 'Extension', 'Autre'] },
+  { id: 'city',         label: 'Ville',                          type: 'text',   required: false, locked: false, enabled: true,  options: [] },
+  { id: 'email',        label: 'Email',                          type: 'email',  required: false, locked: false, enabled: false, options: [] },
+  { id: 'budget',       label: 'Budget estimé',                  type: 'select', required: false, locked: false, enabled: false, options: ['< 200 000 DH', '200 000 – 500 000 DH', '500 000 – 1M DH', '> 1M DH'] },
+  { id: 'surface',      label: 'Surface approximative (m²)',     type: 'number', required: false, locked: false, enabled: false, options: [] },
+  { id: 'timeline',     label: 'Délai souhaité',                 type: 'select', required: false, locked: false, enabled: false, options: ['< 3 mois', '3–6 mois', '6–12 mois', '> 1 an'] },
+  { id: 'how_found',    label: 'Comment nous avez-vous connus ?', type: 'select', required: false, locked: false, enabled: false, options: ['Bouche à oreille', 'Google', 'Facebook', 'Instagram', 'Autre'] },
+]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function slugify(str) {
@@ -16,32 +50,22 @@ function slugify(str) {
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-function buildVitrinePrompt(d) {
-  return `Génère un site vitrine professionnel et moderne pour ${d.name}, architecte basé à ${d.cities?.join(', ') || 'Casablanca'}, spécialisé en ${d.projectTypes?.join(', ') || 'architecture résidentielle'}. Le cabinet a réalisé ${d.clientsCount} projets clients. Style: élégant, noir et or, mobile-first. Inclure: hero avec accroche forte, section à propos, services détaillés, portfolio (projets fictifs visuels), témoignages clients marocains, formulaire de contact. Les soumissions du formulaire doivent envoyer les données en JSON à POST https://app.archicrm.ma/api/leads/external avec l'en-tête X-API-Key: ${d.apiKey}.`
+// Apply palette to base HTML: string replace default colors + inject override CSS
+function applyPaletteToHtml(html, palette) {
+  let result = html
+    .replace(/#0A0A0A/gi, palette.bg)
+    .replace(/#E8A838/gi, palette.accent)
+    // Remove any previous palette override
+    .replace(/<style id="__palette_override">[\s\S]*?<\/style>\n?/i, '')
+
+  const override = `<style id="__palette_override">
+body{background-color:${palette.bg}!important;color:${palette.text}!important}
+</style>\n`
+  if (result.includes('</head>')) return result.replace('</head>', override + '</head>')
+  return override + result
 }
 
-function buildLandingPrompt(d) {
-  return `Génère une landing page de capture de leads pour ${d.name}, architecte à ${d.cities?.[0] || 'Casablanca'}. Spécialité: ${d.projectTypes?.join(', ') || 'architecture résidentielle'}. Objectif: convaincre un visiteur de laisser son contact. Inclure: hero avec urgence et bénéfice clair, bénéfices (3-4 points), témoignages fictifs marocains, formulaire simple (nom, téléphone, type de projet, ville), CTA fort. Soumission vers POST https://app.archicrm.ma/api/leads/external avec X-API-Key: ${d.apiKey}. Ultra-conversion, sobre et percutante.`
-}
-
-// Parse <section> tags to get section list for the section manager
-function parseSections(html) {
-  const sections = []
-  const regex = /<section([^>]*)>([\s\S]*?)<\/section>/gi
-  let match
-  while ((match = regex.exec(html)) !== null) {
-    const attrs = match[1]
-    const inner = match[2]
-    const heading = inner.match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/i)?.[1]?.replace(/<[^>]+>/g, '').trim() || ''
-    const id = attrs.match(/id="([^"]+)"/)?.[1] || ''
-    const name = (heading || id || `Section ${sections.length + 1}`).slice(0, 50)
-    const visible = !/display\s*:\s*none/i.test(attrs)
-    sections.push({ name, fullMatch: match[0], start: match.index, end: match.index + match[0].length, visible })
-  }
-  return sections
-}
-
-// Inject click-to-edit script into srcdoc (does NOT modify the saved HTML)
+// Inject click-to-edit script into srcdoc (NOT saved to published HTML)
 function withEditorScript(html) {
   const script = `<script>(function(){
   var c=0;
@@ -61,44 +85,247 @@ function withEditorScript(html) {
   return html.includes('</body>') ? html.replace('</body>', script + '\n</body>') : html + script
 }
 
-// ─── Voice recorder hook ──────────────────────────────────────────────────────
-const LANGS = ['fr-FR', 'ar-MA', 'en-US']
+function buildVitrinePrompt(d) {
+  return `Generate a premium, conversion-optimized Site Vitrine for ${d.name}, a professional architect based in ${d.cities?.join(', ') || 'Casablanca'}, Morocco.
 
-function useVoiceRecorder(onResult) {
-  const [recording, setRecording] = useState(false)
-  const [transcript, setTranscript] = useState('')
-  const [statusMsg, setStatusMsg] = useState('')
-  const recRef = useRef(null)
-  const triedRef = useRef(0)
+Brand Identity:
+- Architect name: ${d.name}
+- Specializations: ${d.projectTypes?.join(', ') || 'residential architecture'}
+- Cities served: ${d.cities?.join(', ') || 'Casablanca'}
+- Portfolio: ${d.clientsCount} completed projects
+- API endpoint for leads: POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
 
-  const tryLang = useCallback((idx) => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { toast.error('Reconnaissance vocale non supportée'); return }
-    const rec = new SR()
-    rec.lang = LANGS[idx]; rec.continuous = false; rec.interimResults = true
-    recRef.current = rec
-    const names = { 'fr-FR': 'Français', 'ar-MA': 'Arabe', 'en-US': 'Anglais' }
-    setStatusMsg(`Écoute en ${names[LANGS[idx]]}…`)
-    let final = ''
-    rec.onresult = e => {
-      const t = Array.from(e.results).map(r => r[0].transcript).join(' ')
-      setTranscript(t)
-      if (e.results[e.results.length - 1].isFinal) { final = t; onResult(t); setRecording(false); setStatusMsg('') }
-    }
-    rec.onerror = () => {
-      const next = idx + 1
-      if (next < LANGS.length) { tryLang(next) } else { setRecording(false); setStatusMsg('') }
-    }
-    rec.onend = () => {
-      if (!final && triedRef.current < LANGS.length - 1) { triedRef.current++; tryLang(triedRef.current) }
-      else { setRecording(false); setStatusMsg('') }
-    }
-    rec.start()
-  }, [onResult])
+Design Requirements:
+- Style: Luxury architectural firm aesthetic
+- Color scheme: Dark (#0A0A0A) background with gold (#E8A838) accents
+- Typography: Inter for body, elegant serif for headings
+- Layout: Full-width sections, generous whitespace, premium feel
+- Mobile: Fully responsive, touch-optimized
 
-  const start = useCallback(() => { setTranscript(''); triedRef.current = 0; setRecording(true); tryLang(0) }, [tryLang])
-  const stop  = useCallback(() => { recRef.current?.stop(); setRecording(false); setStatusMsg('') }, [])
-  return { recording, transcript, statusMsg, start, stop }
+Include these sections:
+1. Hero: Strong headline showcasing expertise (not just the name)
+2. About: Personal story, philosophy, credentials
+3. Services: Résidentiel, Commercial, Rénovation (based on specializations)
+4. Portfolio: Beautiful grid with Unsplash architecture placeholder images
+5. Testimonials: 2-3 realistic Moroccan client names and quotes
+6. Contact: Form that POSTs JSON to https://app.archicrm.ma/api/leads/external with X-API-Key header
+
+Quality: Premium Moroccan architecture firm website. Make it look like it cost 50,000 DH to build.
+
+Return ONLY complete valid HTML. No markdown, no backticks, no explanations. Start with <!DOCTYPE html>`
+}
+
+function buildLandingPrompt(d, enabledFields) {
+  const fieldsList = enabledFields.map(f => {
+    if (f.type === 'select' && f.options?.length) return `- ${f.label} (dropdown: ${f.options.join(', ')})`
+    if (f.type === 'textarea') return `- ${f.label} (long text area)`
+    if (f.type === 'boolean') return `- ${f.label} (yes/no radio buttons)`
+    return `- ${f.label} (${f.type} input)`
+  }).join('\n')
+
+  return `You are an expert conversion rate optimizer and web developer specializing in high-converting lead generation pages for Moroccan architecture firms. Generate a complete, self-contained HTML landing page that converts visitors into leads.
+
+Architect: ${d.name}, based in ${d.cities?.[0] || 'Casablanca'}, specializing in ${d.projectTypes?.join(', ') || 'architecture'}.
+Portfolio: ${d.clientsCount} completed projects.
+
+The page MUST include:
+1. Hero: Urgent, benefit-focused headline (NOT just the architect's name), strong subheadline, immediate CTA button
+2. Pain points: 3 problems the prospect has without a professional architect
+3. Benefits: 3-4 key benefits of working with this architect
+4. Social proof: 2-3 realistic Moroccan testimonials with avatar photos (https://ui-avatars.com/api/?name=NAME&background=E8A838&color=000&size=80)
+5. Lead capture form with EXACTLY these fields — no more, no less:
+${fieldsList}
+6. Trust signals: years of experience, ${d.clientsCount} projects, satisfaction guarantee
+7. Urgency: limited availability this month
+8. Minimal footer
+
+Design: Mobile-first, dark (#0A0A0A) background, gold (#E8A838) accents, Inter font from Google Fonts.
+Form submission: POST to https://app.archicrm.ma/api/leads/external with header X-API-Key: ${d.apiKey}, send all form fields as JSON.
+On successful submission: hide form, show in gold: 'Merci ! Nous vous contacterons dans les 24h.'
+
+Return ONLY complete valid HTML. No markdown, no backticks, no explanations. Start with <!DOCTYPE html>`
+}
+
+function buildEnabledFields(presetQuestions, customQuestions) {
+  return [
+    ...presetQuestions.filter(q => q.enabled),
+    ...customQuestions,
+  ]
+}
+
+// ─── Toggle Switch ────────────────────────────────────────────────────────────
+function Toggle({ enabled, onChange, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!enabled)}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none
+        ${enabled ? 'bg-[#E8A838]' : 'bg-gray-300 dark:bg-white/[0.15]'}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200
+        ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+    </button>
+  )
+}
+
+// ─── Form Builder ─────────────────────────────────────────────────────────────
+function FormBuilder({ presetQuestions, setPresetQuestions, customQuestions, setCustomQuestions }) {
+  const [showAdd, setShowAdd] = useState(false)
+  const [newQ, setNewQ] = useState({ label: '', type: 'text', options: '', required: false })
+
+  const addCustomQuestion = () => {
+    if (!newQ.label.trim()) return
+    setCustomQuestions(prev => [...prev, {
+      id: `custom-${Date.now()}`,
+      label: newQ.label.trim(),
+      type: newQ.type,
+      options: newQ.type === 'select' ? newQ.options.split(',').map(o => o.trim()).filter(Boolean) : [],
+      required: newQ.required,
+    }])
+    setNewQ({ label: '', type: 'text', options: '', required: false })
+    setShowAdd(false)
+  }
+
+  const moveCustomQ = (idx, dir) => {
+    setCustomQuestions(prev => {
+      const arr = [...prev]
+      const ni = idx + dir
+      if (ni < 0 || ni >= arr.length) return prev
+      ;[arr[idx], arr[ni]] = [arr[ni], arr[idx]]
+      return arr
+    })
+  }
+
+  return (
+    <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4">
+      <div className="mb-3">
+        <p className="text-[12px] font-semibold text-gray-900 dark:text-white">Questions du formulaire</p>
+        <p className="text-[11px] text-gray-400 dark:text-white/30 mt-0.5">Personnalisez les questions posées à vos prospects</p>
+      </div>
+
+      {/* Preset questions */}
+      <div className="space-y-1.5 mb-3">
+        {presetQuestions.map(q => (
+          <div key={q.id}
+            className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all
+              ${q.enabled ? 'bg-[#E8A838]/5 border-[#E8A838]/20' : 'bg-gray-50 dark:bg-white/[0.03] border-gray-200 dark:border-white/[0.06]'}`}>
+            <span className={`flex-1 text-[12px] font-medium truncate ${q.enabled ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/30'}`}>
+              {q.label}
+              {q.locked && <span className="ml-1 text-[10px] text-gray-400 dark:text-white/20">(requis)</span>}
+            </span>
+            <Toggle
+              enabled={q.enabled}
+              onChange={v => setPresetQuestions(prev => prev.map(p => p.id === q.id ? { ...p, enabled: v } : p))}
+              disabled={q.locked}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Custom questions */}
+      {customQuestions.length > 0 && (
+        <div className="space-y-1.5 mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 px-1">Questions personnalisées</p>
+          {customQuestions.map((q, idx) => (
+            <div key={q.id} className="flex items-center gap-2 px-3 py-2 bg-[#E8A838]/5 border border-[#E8A838]/20 rounded-xl">
+              <span className="flex-1 text-[12px] font-medium text-gray-900 dark:text-white truncate">{q.label}</span>
+              <span className="text-[10px] text-gray-400 dark:text-white/30 shrink-0">{q.type}</span>
+              <div className="flex gap-0.5 shrink-0">
+                <button onClick={() => moveCustomQ(idx, -1)} disabled={idx === 0}
+                  className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-gray-600 dark:hover:text-white disabled:opacity-30">
+                  <ChevronUp size={10} />
+                </button>
+                <button onClick={() => moveCustomQ(idx, 1)} disabled={idx === customQuestions.length - 1}
+                  className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-gray-600 dark:hover:text-white disabled:opacity-30">
+                  <ChevronDown size={10} />
+                </button>
+                <button onClick={() => setCustomQuestions(prev => prev.filter(c => c.id !== q.id))}
+                  className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-red-400">
+                  <X size={10} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add custom question form */}
+      {showAdd ? (
+        <div className="border border-[#E8A838]/30 rounded-xl p-3 space-y-2 bg-[#E8A838]/5">
+          <input
+            type="text"
+            value={newQ.label}
+            onChange={e => setNewQ(p => ({ ...p, label: e.target.value }))}
+            placeholder="Ex: Avez-vous déjà un terrain ?"
+            autoFocus
+            className="w-full px-3 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-lg text-[12px] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#E8A838]/60 transition"
+          />
+          <div className="flex gap-2 items-center">
+            <select value={newQ.type} onChange={e => setNewQ(p => ({ ...p, type: e.target.value }))}
+              className="flex-1 px-2.5 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-lg text-[12px] text-gray-900 dark:text-white focus:outline-none focus:border-[#E8A838]/60 transition">
+              <option value="text">Texte court</option>
+              <option value="textarea">Texte long</option>
+              <option value="boolean">Oui / Non</option>
+              <option value="select">Liste de choix</option>
+            </select>
+            <label className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-white/40 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" checked={newQ.required} onChange={e => setNewQ(p => ({ ...p, required: e.target.checked }))}
+                className="accent-[#E8A838]" />
+              Requis
+            </label>
+          </div>
+          {newQ.type === 'select' && (
+            <input
+              type="text"
+              value={newQ.options}
+              onChange={e => setNewQ(p => ({ ...p, options: e.target.value }))}
+              placeholder="Option 1, Option 2, Option 3"
+              className="w-full px-3 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-lg text-[12px] text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#E8A838]/60 transition"
+            />
+          )}
+          <div className="flex gap-2">
+            <button onClick={addCustomQuestion} disabled={!newQ.label.trim()}
+              className="flex items-center gap-1.5 bg-[#E8A838] hover:bg-[#d4952a] disabled:opacity-50 text-[#0A0A0A] font-bold px-3 py-1.5 rounded-lg text-[12px] transition-all">
+              <Check size={12} /> Ajouter
+            </button>
+            <button onClick={() => setShowAdd(false)}
+              className="px-3 py-1.5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/40 text-[12px] rounded-lg hover:text-gray-700 dark:hover:text-white transition-all">
+              Annuler
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowAdd(true)}
+          className="flex items-center justify-center gap-1.5 text-[12px] text-gray-400 hover:text-[#E8A838] border border-dashed border-gray-300 dark:border-white/20 hover:border-[#E8A838]/40 px-3 py-2 rounded-xl transition-all w-full">
+          <Plus size={12} /> Ajouter une question personnalisée
+        </button>
+      )}
+
+      {/* Form mini preview */}
+      {buildEnabledFields(presetQuestions, customQuestions).length > 0 && (
+        <div className="mt-4 border-t border-gray-100 dark:border-white/[0.06] pt-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-2">Aperçu du formulaire</p>
+          <div className="space-y-2 max-h-44 overflow-y-auto">
+            {buildEnabledFields(presetQuestions, customQuestions).map(q => (
+              <div key={q.id} className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-medium text-gray-500 dark:text-white/40">{q.label}{q.required ? ' *' : ''}</label>
+                {q.type === 'select'
+                  ? <select disabled className="w-full px-2 py-1.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-[11px] text-gray-400"><option>Choisir…</option></select>
+                  : q.type === 'textarea'
+                  ? <textarea disabled rows={2} className="w-full px-2 py-1.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-[11px] resize-none" />
+                  : q.type === 'boolean'
+                  ? <div className="flex gap-4 text-[11px] text-gray-400"><label className="flex items-center gap-1"><input type="radio" disabled /> Oui</label><label className="flex items-center gap-1"><input type="radio" disabled /> Non</label></div>
+                  : <input type={q.type} disabled placeholder={q.label} className="w-full px-2 py-1.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-[11px] text-gray-400" />
+                }
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
@@ -114,12 +341,7 @@ function SettingsTab({ published }) {
     setForm(prev => {
       const next = { ...prev }
       published.forEach(s => {
-        next[s.type] = {
-          customDomain: s.custom_domain || '',
-          metaPixelId: s.meta_pixel_id || '',
-          googleTagId: s.google_tag_id || '',
-          conversionApiToken: s.conversion_api_token || '',
-        }
+        next[s.type] = { customDomain: s.custom_domain || '', metaPixelId: s.meta_pixel_id || '', googleTagId: s.google_tag_id || '', conversionApiToken: s.conversion_api_token || '' }
       })
       return next
     })
@@ -151,12 +373,10 @@ function SettingsTab({ published }) {
             <h3 className="text-[13px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-4">
               {type === 'vitrine' ? 'Site Vitrine' : 'Landing Page'}
             </h3>
-            {pub ? (
-              <div className="flex items-center gap-2 mb-4 text-green-500 text-[12px]">
-                <CheckCircle size={14} />
-                <span>Publié sur <a href={`https://${pub.slug}.archicrm.ma`} target="_blank" rel="noopener noreferrer" className="underline">{pub.slug}.archicrm.ma</a></span>
-              </div>
-            ) : <p className="text-gray-400 dark:text-white/30 text-[12px] mb-4">Pas encore publié.</p>}
+            {pub
+              ? <div className="flex items-center gap-2 mb-4 text-green-500 text-[12px]"><CheckCircle size={14} /><span>Publié sur <a href={`https://${pub.slug}.archicrm.ma`} target="_blank" rel="noopener noreferrer" className="underline">{pub.slug}.archicrm.ma</a></span></div>
+              : <p className="text-gray-400 dark:text-white/30 text-[12px] mb-4">Pas encore publié.</p>
+            }
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Domaine personnalisé" value={f.customDomain} onChange={set('customDomain')} placeholder="monsite.ma" />
               <Field label="Meta Pixel ID" value={f.metaPixelId} onChange={set('metaPixelId')} placeholder="1234567890" />
@@ -175,113 +395,184 @@ function SettingsTab({ published }) {
   )
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const MODIFY_CHIPS = [
-  'Rends le hero plus accrocheur',
-  'Change les couleurs en bleu marine',
-  'Ajoute une section témoignages',
-  'Supprime la section portfolio',
-  'Rends le texte plus court',
-]
-const SECTION_TYPES = ['Hero', 'À Propos', 'Services', 'Portfolio', 'Témoignages', 'Contact', 'FAQ', 'Statistiques']
-const FONTS = ['Inter', 'Playfair Display', 'Montserrat', 'Roboto']
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Sites() {
   const { user } = useAuth()
 
-  // Tab & mobile view
-  const [tab, setTab] = useState('vitrine')           // vitrine | landing | settings
-  const [mobileView, setMobileView] = useState('editor') // editor | preview
+  // UI state
+  const [tab, setTab]               = useState('vitrine')
+  const [mobileView, setMobileView] = useState('editor')
+  const [deviceMode, setDeviceMode] = useState('desktop')
+  const [promptExpanded, setPromptExpanded] = useState(false)
 
-  // Remote data
-  const [siteData, setSiteData] = useState(null)
+  // Data
+  const [siteData, setSiteData]   = useState(null)
   const [published, setPublished] = useState([])
   const [loadingData, setLoadingData] = useState(true)
 
-  // Editor state
-  const [prompt, setPrompt]           = useState('')
-  const [generating, setGenerating]   = useState(false)
-  const [modifying, setModifying]     = useState(false)
-  const [html, setHtml]               = useState('')       // current HTML (with any style changes)
-  const [htmlBase, setHtmlBase]       = useState('')       // HTML before style changes (for re-apply)
-  const [sections, setSections]       = useState([])
+  // Editor
+  const [html, setHtml]           = useState('')       // styled (with palette applied)
+  const [htmlBase, setHtmlBase]   = useState('')       // raw AI output (original colors)
+  const [generating, setGenerating] = useState(false)
+  const [modifying, setModifying]   = useState(false)
+  const [selectedPalette, setSelectedPalette] = useState(1)
+  const [customPrompt, setCustomPrompt] = useState('')
   const [modifyPrompt, setModifyPrompt] = useState('')
-  const [styles, setStyles]           = useState({ primaryColor: '#E8A838', bgColor: '#0A0A0A', fontFamily: 'Inter' })
-  const [addSectionOpen, setAddSectionOpen] = useState(false)
 
-  // Publish state
-  const [publishing, setPublishing]   = useState(false)
+  // Voice
+  const [voiceRecording, setVoiceRecording] = useState(false)
+  const voiceRecRef = useRef(null)
+
+  // Form builder (landing only)
+  const [presetQuestions, setPresetQuestions] = useState(
+    () => JSON.parse(JSON.stringify(DEFAULT_PRESET_QUESTIONS))
+  )
+  const [customQuestions, setCustomQuestions] = useState([])
+
+  // Publish
+  const [publishing, setPublishing]     = useState(false)
   const [publishedUrl, setPublishedUrl] = useState('')
-  const [publishedAt, setPublishedAt] = useState(null)
+  const [publishedAt, setPublishedAt]   = useState(null)
 
-  // Click-to-edit state
-  const [editPanel, setEditPanel]     = useState(null) // { text, tag, eid }
-  const [editText, setEditText]       = useState('')
+  // Click-to-edit
+  const [editPanel, setEditPanel] = useState(null)
+  const [editText, setEditText]   = useState('')
 
   const iframeRef = useRef(null)
-
-  // srcdoc = HTML with editor script injected (only for preview, not saved)
   const srcdoc = html ? withEditorScript(html) : ''
 
-  // ── Load data ────────────────────────────────────────────────────────────
+  // ── Load data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([api.get('/api/sites/my-data'), api.get('/api/sites/published')])
-      .then(([d, p]) => { setSiteData(d.data); setPublished(p.data || []) })
+      .then(([d, p]) => {
+        setSiteData(d.data)
+        setPublished(p.data || [])
+        setCustomPrompt(buildVitrinePrompt(d.data))
+      })
       .catch(() => toast.error('Erreur lors du chargement'))
       .finally(() => setLoadingData(false))
   }, [])
 
-  // ── Reset on tab change ───────────────────────────────────────────────────
+  // ── Reset on tab change ────────────────────────────────────────────────────
   useEffect(() => {
     if (!siteData || tab === 'settings') return
-    setPrompt(tab === 'vitrine' ? buildVitrinePrompt(siteData) : buildLandingPrompt(siteData))
-    setHtml(''); setHtmlBase(''); setSections([]); setPublishedUrl(''); setEditPanel(null)
+    const fields = buildEnabledFields(presetQuestions, customQuestions)
+    setCustomPrompt(tab === 'vitrine' ? buildVitrinePrompt(siteData) : buildLandingPrompt(siteData, fields))
+    setHtml(''); setHtmlBase(''); setPublishedUrl(''); setEditPanel(null)
   }, [tab, siteData])
 
-  // ── Close edit panel when HTML changes (iframe re-renders = new edit IDs) ─
+  // ── Rebuild landing prompt when form config changes ────────────────────────
+  useEffect(() => {
+    if (!siteData || tab !== 'landing') return
+    const fields = buildEnabledFields(presetQuestions, customQuestions)
+    setCustomPrompt(buildLandingPrompt(siteData, fields))
+  }, [presetQuestions, customQuestions, siteData, tab])
+
+  // ── Close edit panel on HTML change ───────────────────────────────────────
   useEffect(() => { setEditPanel(null) }, [html])
 
-  // ── postMessage listener for click-to-edit ────────────────────────────────
+  // ── postMessage for click-to-edit ──────────────────────────────────────────
   useEffect(() => {
     const handler = e => {
       if (e.data?.type !== 'ELEMENT_CLICK') return
-      setEditPanel(e.data)
-      setEditText(e.data.text || '')
+      setEditPanel(e.data); setEditText(e.data.text || '')
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
   }, [])
 
-  // ── Voice recorder ────────────────────────────────────────────────────────
-  const voice = useVoiceRecorder(useCallback(text => {
-    setPrompt(p => p ? `${p}\n\n${text}` : text)
-  }, []))
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const currentPalette = PALETTES.find(p => p.id === selectedPalette) || PALETTES[0]
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
+  // Store raw AI output in htmlBase, apply current palette to get html
+  const handleGenerated = useCallback((rawHtml) => {
+    const palette = PALETTES.find(p => p.id === selectedPalette) || PALETTES[0]
+    setHtmlBase(rawHtml)
+    setHtml(applyPaletteToHtml(rawHtml, palette))
+    setMobileView('preview')
+  }, [selectedPalette])
 
-  const generate = async () => {
-    if (!prompt.trim()) { toast.error('Entrez un prompt'); return }
+  // ── Palette apply ──────────────────────────────────────────────────────────
+  const applyPalette = (palette) => {
+    setSelectedPalette(palette.id)
+    if (htmlBase) setHtml(applyPaletteToHtml(htmlBase, palette))
+  }
+
+  // ── Voice ──────────────────────────────────────────────────────────────────
+  const stopVoice = useCallback(() => {
+    voiceRecRef.current?.stop()
+    setVoiceRecording(false)
+  }, [])
+
+  const generateFromVoice = useCallback(async (transcript) => {
     setGenerating(true)
     try {
-      const { data } = await api.post('/api/sites/generate', { prompt })
-      const g = data.html || ''
-      setHtml(g); setHtmlBase(g); setSections(parseSections(g))
-      setStyles({ primaryColor: '#E8A838', bgColor: '#0A0A0A', fontFamily: 'Inter' })
-      setMobileView('preview')
+      const { data } = await api.post('/api/sites/generate', { prompt: transcript, voice: true })
+      handleGenerated(data.html || '')
+      toast.success('Site généré !')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de la génération')
+    } finally { setGenerating(false) }
+  }, [handleGenerated])
+
+  const tryVoiceLang = useCallback((idx, SR) => {
+    if (idx >= VOICE_LANGS.length) { setVoiceRecording(false); return }
+    const rec = new SR()
+    rec.lang = VOICE_LANGS[idx]
+    rec.continuous = false
+    rec.interimResults = false
+    voiceRecRef.current = rec
+    let gotResult = false
+
+    rec.onresult = e => {
+      gotResult = true
+      const text = Array.from(e.results).map(r => r[0].transcript).join(' ')
+      setVoiceRecording(false)
+      generateFromVoice(text)
+    }
+    rec.onerror = e => {
+      if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
+        toast.error('Accès au microphone refusé')
+        setVoiceRecording(false)
+        return
+      }
+      if (!gotResult && idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
+      else setVoiceRecording(false)
+    }
+    rec.onend = () => {
+      if (!gotResult && idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
+      else if (!gotResult) setVoiceRecording(false)
+    }
+    try { rec.start() } catch { setVoiceRecording(false) }
+  }, [generateFromVoice])
+
+  const startVoice = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) { toast.error('Microphone non supporté par ce navigateur'); return }
+    setVoiceRecording(true)
+    tryVoiceLang(0, SR)
+  }, [tryVoiceLang])
+
+  // ── Generate from prompt ───────────────────────────────────────────────────
+  const generateFromPrompt = async () => {
+    if (!customPrompt.trim()) { toast.error('Entrez un prompt'); return }
+    setGenerating(true)
+    try {
+      const { data } = await api.post('/api/sites/generate', { prompt: customPrompt })
+      handleGenerated(data.html || '')
       toast.success('Site généré !')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur lors de la génération')
     } finally { setGenerating(false) }
   }
 
+  // ── AI Modify ──────────────────────────────────────────────────────────────
   const applyModification = async () => {
-    if (!modifyPrompt.trim() || !html) return
+    if (!modifyPrompt.trim() || !htmlBase) return
     setModifying(true)
     try {
-      const { data } = await api.post('/api/sites/modify', { html, instruction: modifyPrompt })
-      const u = data.html || ''
-      setHtml(u); setHtmlBase(u); setSections(parseSections(u))
+      const { data } = await api.post('/api/sites/modify', { html: htmlBase, instruction: modifyPrompt })
+      handleGenerated(data.html || '')
       setModifyPrompt('')
       toast.success('Modification appliquée !')
     } catch (err) {
@@ -289,78 +580,18 @@ export default function Sites() {
     } finally { setModifying(false) }
   }
 
-  const addSection = async type => {
-    setAddSectionOpen(false)
-    setModifying(true)
-    try {
-      const { data } = await api.post('/api/sites/modify', {
-        html,
-        instruction: `Ajoute une section "${type}" professionnelle et bien stylée après la dernière section existante. Ne modifie rien d'autre.`,
-      })
-      const u = data.html || ''
-      setHtml(u); setHtmlBase(u); setSections(parseSections(u))
-      toast.success(`Section ${type} ajoutée !`)
-    } catch (err) {
-      toast.error('Erreur lors de l\'ajout de section')
-    } finally { setModifying(false) }
-  }
-
+  // ── Click-to-edit ──────────────────────────────────────────────────────────
   const saveEdit = () => {
     if (!editPanel) { setEditPanel(null); return }
-    const escaped = editPanel.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const replacement = editText.trim() || editPanel.text
-    const updated = html.replace(new RegExp(escaped), replacement)
-    setHtml(updated); setHtmlBase(updated); setSections(parseSections(updated))
+    const esc = editPanel.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const rep = editText.trim() || editPanel.text
+    setHtml(prev => prev.replace(new RegExp(esc), rep))
+    setHtmlBase(prev => prev.replace(new RegExp(esc), rep))
     setEditPanel(null)
     toast.success('Texte modifié')
   }
 
-  const toggleSection = sec => {
-    let updated
-    if (sec.visible) {
-      updated = html.replace(sec.fullMatch, sec.fullMatch.replace(/^<section(\s|>)/, '<section style="display:none"$1'))
-    } else {
-      updated = html.replace(
-        sec.fullMatch,
-        sec.fullMatch.replace(/\s*style="display:none"\s*/i, ' ').replace(/\s*style="display:none;([^"]*)"/i, ' style="$1"')
-      )
-    }
-    setHtml(updated); setSections(parseSections(updated))
-  }
-
-  const deleteSection = sec => {
-    const updated = html.replace(sec.fullMatch, '')
-    setHtml(updated); setHtmlBase(updated); setSections(parseSections(updated))
-    toast.success('Section supprimée')
-  }
-
-  const moveSection = (idx, dir) => {
-    const newIdx = idx + dir
-    if (newIdx < 0 || newIdx >= sections.length) return
-    const a = sections[idx], b = sections[newIdx]
-    let updated
-    if (dir === -1) { // move up: b is before a in document
-      updated = html.slice(0, b.start) + a.fullMatch + html.slice(b.end, a.start) + b.fullMatch + html.slice(a.end)
-    } else {          // move down: a is before b
-      updated = html.slice(0, a.start) + b.fullMatch + html.slice(a.end, b.start) + a.fullMatch + html.slice(b.end)
-    }
-    setHtml(updated); setHtmlBase(updated); setSections(parseSections(updated))
-  }
-
-  const applyStyles = () => {
-    // Work from htmlBase so color changes don't stack
-    let updated = htmlBase.replace(/#E8A838/gi, styles.primaryColor)
-    const fontLink = styles.fontFamily !== 'Inter'
-      ? `<link href="https://fonts.googleapis.com/css2?family=${styles.fontFamily.replace(/ /g, '+')}:wght@400;500;600;700&display=swap" rel="stylesheet">\n`
-      : ''
-    const override = `<style id="__site_override">body,*{font-family:'${styles.fontFamily}',sans-serif!important}body{background-color:${styles.bgColor}!important}</style>\n`
-    if (updated.includes('</head>')) {
-      updated = updated.replace('</head>', fontLink + override + '</head>')
-    }
-    setHtml(updated)
-    toast.success('Styles appliqués')
-  }
-
+  // ── Publish ────────────────────────────────────────────────────────────────
   const publish = async () => {
     if (!html) { toast.error('Générez d\'abord un site'); return }
     const slug = siteData?.slug || slugify(user?.name || 'architecte')
@@ -377,6 +608,10 @@ export default function Sites() {
   }
 
   const slug = siteData?.slug || slugify(user?.name || 'architecte')
+  const resetPrompt = () => {
+    const fields = buildEnabledFields(presetQuestions, customQuestions)
+    setCustomPrompt(tab === 'vitrine' ? buildVitrinePrompt(siteData) : buildLandingPrompt(siteData, fields))
+  }
 
   if (loadingData) return (
     <div className="flex items-center justify-center min-h-[400px]">
@@ -384,7 +619,7 @@ export default function Sites() {
     </div>
   )
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-3">
 
@@ -396,12 +631,11 @@ export default function Sites() {
           </div>
           <h1 className="text-[17px] font-bold text-gray-900 dark:text-white">Sites Web</h1>
         </div>
-
         <div className="flex items-center gap-2">
-          {/* Mobile view toggle — only when HTML exists */}
+          {/* Mobile view toggle */}
           {html && (
             <div className="flex lg:hidden gap-0.5 bg-gray-100 dark:bg-white/[0.06] rounded-lg p-0.5">
-              {[['editor', Monitor, 'Éditeur'], ['preview', Eye, 'Aperçu']].map(([v, Icon, label]) => (
+              {[['editor', Monitor, 'Éditeur'], ['preview', Globe, 'Aperçu']].map(([v, Icon, label]) => (
                 <button key={v} onClick={() => setMobileView(v)}
                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${mobileView === v ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-white/40'}`}>
                   <Icon size={11} />{label}
@@ -409,7 +643,6 @@ export default function Sites() {
               ))}
             </div>
           )}
-
           {/* Site type tabs */}
           <div className="flex gap-0.5 bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl p-1">
             {[['vitrine', 'Site Vitrine'], ['landing', 'Landing']].map(([id, label]) => (
@@ -419,8 +652,7 @@ export default function Sites() {
               </button>
             ))}
           </div>
-
-          {/* Settings toggle */}
+          {/* Settings */}
           <button onClick={() => setTab(t => t === 'settings' ? 'vitrine' : 'settings')}
             className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${tab === 'settings' ? 'bg-[#E8A838] border-[#E8A838] text-[#0A0A0A]' : 'border-gray-200 dark:border-white/10 text-gray-400 hover:border-[#E8A838]/40 hover:text-[#E8A838]'}`}>
             <Settings size={14} />
@@ -428,222 +660,242 @@ export default function Sites() {
         </div>
       </div>
 
-      {/* ── Settings (full width) ───────────────────────────────────────────── */}
+      {/* ── Settings full-width ──────────────────────────────────────────────── */}
       {tab === 'settings' ? (
         <SettingsTab published={published} />
       ) : (
         <>
           {/* ── Split screen ──────────────────────────────────────────────── */}
-          <div className="flex gap-3" style={{ height: 'calc(100vh - 230px)', minHeight: 520 }}>
+          <div className="flex gap-3" style={{ height: 'calc(100vh - 220px)', minHeight: 540 }}>
 
-            {/* LEFT PANEL — scrollable */}
-            <div className={`w-full lg:w-[35%] flex-shrink-0 overflow-y-auto flex flex-col gap-3 pr-1
+            {/* ═══ LEFT PANEL ══════════════════════════════════════════════════ */}
+            <div className={`w-full lg:w-[38%] flex-shrink-0 flex flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-[#0d0d0d]
               ${html && mobileView === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
 
-              {/* ── AI Prompt ─────────────────────────────────────────────── */}
-              <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4 flex-shrink-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-2.5">Générer avec l'IA</p>
-                <div className="relative">
-                  <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={5}
-                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl text-[12px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-[#E8A838]/60 focus:ring-2 focus:ring-[#E8A838]/20 transition resize-none pr-10 leading-relaxed"
-                    placeholder="Décrivez votre site…" />
-                  <button onClick={voice.recording ? voice.stop : voice.start}
-                    className={`absolute right-2.5 top-2.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${voice.recording ? 'bg-red-500 text-white animate-pulse' : 'bg-[#E8A838]/10 text-[#E8A838] hover:bg-[#E8A838]/20'}`}>
-                    {voice.recording ? <MicOff size={12} /> : <Mic size={12} />}
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+
+                {/* ── SECTION 1: Voice generation ─────────────────────────── */}
+                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-5 text-center">
+                  <button
+                    onClick={voiceRecording ? stopVoice : startVoice}
+                    disabled={generating || modifying}
+                    className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3 transition-all
+                      ${voiceRecording
+                        ? 'bg-red-500 shadow-lg shadow-red-500/40 animate-pulse scale-110'
+                        : 'bg-[#E8A838] hover:bg-[#d4952a] shadow-lg shadow-[#E8A838]/30 hover:scale-105 active:scale-95'}
+                      disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {voiceRecording
+                      ? <MicOff size={24} className="text-white" />
+                      : <Mic size={24} className="text-[#0A0A0A]" />}
                   </button>
+
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white mb-1">
+                    {voiceRecording ? 'Écoute en cours…'
+                      : generating ? 'Génération en cours…'
+                      : 'Parlez pour générer'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 dark:text-white/30">
+                    {voiceRecording
+                      ? 'Parlez maintenant, le site sera généré automatiquement'
+                      : 'Parlez en Darija, Français ou Anglais'}
+                  </p>
+                  {!voiceRecording && !generating && (
+                    <p className="text-[11px] text-gray-300 dark:text-white/20 mt-3">ou générez avec un prompt détaillé ↓</p>
+                  )}
                 </div>
 
-                {(voice.recording || voice.transcript) && (
-                  <div className="mt-2 px-2.5 py-1.5 bg-[#E8A838]/5 border border-[#E8A838]/20 rounded-lg text-[11px]">
-                    {voice.statusMsg && <p className="text-[#E8A838] font-medium">{voice.statusMsg}</p>}
-                    {voice.transcript && <p className="text-gray-500 dark:text-white/40 italic">"{voice.transcript}"</p>}
+                {/* ── SECTION 2: Smart prompt (collapsible) ───────────────── */}
+                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl overflow-hidden">
+                  <button
+                    onClick={() => setPromptExpanded(e => !e)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                  >
+                    <span className="text-[12px] font-semibold text-gray-700 dark:text-white/70 flex items-center gap-2">
+                      <Wand2 size={13} className="text-[#E8A838]" />
+                      Générer avec prompt détaillé
+                    </span>
+                    <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${promptExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {promptExpanded && (
+                    <div className="px-4 pb-4 space-y-3 border-t border-gray-100 dark:border-white/[0.06] pt-3">
+                      <textarea
+                        value={customPrompt}
+                        onChange={e => setCustomPrompt(e.target.value)}
+                        rows={9}
+                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-[#E8A838]/60 focus:ring-2 focus:ring-[#E8A838]/20 transition resize-none leading-relaxed"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={generateFromPrompt} disabled={generating || !customPrompt.trim()}
+                          className="flex-1 flex items-center justify-center gap-2 bg-[#E8A838] hover:bg-[#d4952a] disabled:opacity-50 text-[#0A0A0A] font-bold px-4 py-2.5 rounded-xl text-[13px] transition-all active:scale-95">
+                          {generating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                          {generating ? 'Génération…' : 'Générer'}
+                        </button>
+                        {siteData && (
+                          <button onClick={resetPrompt} title="Réinitialiser le prompt"
+                            className="w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-white/10 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white transition-all">
+                            <RefreshCw size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── SECTION 3: Color palette ────────────────────────────── */}
+                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-3">Palette de couleurs</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {PALETTES.map(palette => (
+                      <button
+                        key={palette.id}
+                        onClick={() => applyPalette(palette)}
+                        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
+                          selectedPalette === palette.id
+                            ? 'border-[#E8A838] bg-[#E8A838]/5 shadow-sm'
+                            : 'border-transparent hover:border-gray-200 dark:hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex gap-0.5">
+                          {[palette.bg, palette.accent, palette.text].map((color, i) => (
+                            <div key={i} className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/10" style={{ background: color }} />
+                          ))}
+                        </div>
+                        <span className="text-[9px] text-gray-500 dark:text-white/30 text-center leading-tight line-clamp-2">{palette.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── SECTION 4: Quick AI edits (after generation) ─────────── */}
+                {html && (
+                  <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-2.5">Modifier avec l'IA</p>
+                    <textarea
+                      value={modifyPrompt}
+                      onChange={e => setModifyPrompt(e.target.value)}
+                      rows={2}
+                      placeholder="Que voulez-vous modifier ?"
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl text-[12px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-[#E8A838]/60 focus:ring-2 focus:ring-[#E8A838]/20 transition resize-none"
+                    />
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {MODIFY_CHIPS.map(chip => (
+                        <button key={chip} onClick={() => setModifyPrompt(chip)}
+                          className="px-2 py-1 bg-gray-100 dark:bg-white/[0.06] hover:bg-[#E8A838]/10 hover:text-[#E8A838] text-gray-600 dark:text-white/50 text-[11px] rounded-lg transition-all border border-transparent hover:border-[#E8A838]/20">
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={applyModification} disabled={modifying || !modifyPrompt.trim()}
+                      className="mt-3 w-full flex items-center justify-center gap-2 bg-[#0A0A0A] dark:bg-white/[0.08] hover:bg-[#1a1a1a] dark:hover:bg-white/[0.12] disabled:opacity-50 text-white font-semibold px-4 py-2.5 rounded-xl text-[13px] transition-all">
+                      {modifying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      {modifying ? 'Modification…' : 'Appliquer'}
+                    </button>
                   </div>
                 )}
 
-                <div className="flex gap-2 mt-3">
-                  <button onClick={generate} disabled={generating || !prompt.trim()}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#E8A838] hover:bg-[#d4952a] disabled:opacity-50 text-[#0A0A0A] font-bold px-4 py-2.5 rounded-xl text-[13px] transition-all active:scale-95">
-                    {generating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                    {generating ? 'Génération…' : 'Générer'}
-                  </button>
-                  {siteData && (
-                    <button onClick={() => setPrompt(tab === 'vitrine' ? buildVitrinePrompt(siteData) : buildLandingPrompt(siteData))}
-                      title="Réinitialiser le prompt"
-                      className="w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-white/10 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-white transition-all">
-                      <RefreshCw size={13} />
+                {/* ── SECTION 5: Form builder (landing only) ───────────────── */}
+                {tab === 'landing' && (
+                  <FormBuilder
+                    presetQuestions={presetQuestions}
+                    setPresetQuestions={setPresetQuestions}
+                    customQuestions={customQuestions}
+                    setCustomQuestions={setCustomQuestions}
+                  />
+                )}
+              </div>
+
+              {/* ── Sticky publish bar ────────────────────────────────────── */}
+              <div className="flex-shrink-0 border-t border-gray-200 dark:border-white/[0.08] p-3 bg-white dark:bg-[#111]">
+                <div className="bg-[#0A0A0A] rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-white truncate">
+                      <span className="text-[#E8A838]">{slug}</span>.archicrm.ma
+                    </p>
+                    {publishedAt && (
+                      <p className="text-white/30 text-[10px] mt-0.5">
+                        Publié à {publishedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {publishedUrl && (
+                      <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
+                        className="w-8 h-8 flex items-center justify-center text-[#E8A838] hover:bg-[#E8A838]/10 rounded-lg transition-all">
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                    <button onClick={publish} disabled={publishing || !html}
+                      className="flex items-center gap-1.5 bg-[#E8A838] hover:bg-[#d4952a] disabled:opacity-40 text-[#0A0A0A] font-bold px-4 py-2 rounded-xl text-[12px] transition-all active:scale-95">
+                      {publishing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                      {publishing ? '…' : 'Publier le site'}
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ═══ RIGHT PANEL — Live Preview ══════════════════════════════════ */}
+            <div className={`flex-1 min-w-0 flex flex-col gap-2 ${html && mobileView === 'editor' ? 'hidden lg:flex' : 'flex'}`}>
+
+              {/* Preview controls bar */}
+              <div className="flex items-center justify-between flex-shrink-0">
+                {/* Device switcher */}
+                <div className="flex gap-0.5 bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl p-1">
+                  {[['desktop', Monitor, 'Bureau'], ['tablet', Tablet, 'Tablette'], ['mobile', Smartphone, 'Mobile']].map(([v, Icon, label]) => (
+                    <button key={v} onClick={() => setDeviceMode(v)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${deviceMode === v ? 'bg-[#E8A838] text-[#0A0A0A]' : 'text-gray-400 hover:text-gray-700 dark:hover:text-white'}`}>
+                      <Icon size={12} />
+                      <span className="hidden sm:inline">{label}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* Actions */}
+                <div className="flex gap-1.5">
+                  {html && (
+                    <>
+                      <button
+                        onClick={() => { const b = new Blob([html], { type: 'text/html' }); window.open(URL.createObjectURL(b), '_blank') }}
+                        className="flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/10 px-2.5 py-1.5 rounded-lg transition-all">
+                        <ExternalLink size={11} /> Ouvrir
+                      </button>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(html); toast.success('Code copié') }}
+                        className="flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/10 px-2.5 py-1.5 rounded-lg transition-all">
+                        <Copy size={11} /> Copier le HTML
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
 
-              {/* ── AI Modify ─────────────────────────────────────────────── */}
-              {html && (
-                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4 flex-shrink-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-2.5">Modifier avec l'IA</p>
-                  <textarea value={modifyPrompt} onChange={e => setModifyPrompt(e.target.value)} rows={2}
-                    placeholder="Que voulez-vous modifier ?"
-                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-xl text-[12px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/20 focus:outline-none focus:border-[#E8A838]/60 focus:ring-2 focus:ring-[#E8A838]/20 transition resize-none" />
-
-                  {/* Suggestion chips */}
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {MODIFY_CHIPS.map(chip => (
-                      <button key={chip} onClick={() => setModifyPrompt(chip)}
-                        className="px-2 py-1 bg-gray-100 dark:bg-white/[0.06] hover:bg-[#E8A838]/10 hover:text-[#E8A838] text-gray-600 dark:text-white/50 text-[11px] rounded-lg transition-all border border-transparent hover:border-[#E8A838]/20">
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button onClick={applyModification} disabled={modifying || !modifyPrompt.trim()}
-                    className="mt-3 w-full flex items-center justify-center gap-2 bg-[#0A0A0A] dark:bg-white/[0.08] hover:bg-[#1a1a1a] dark:hover:bg-white/[0.12] disabled:opacity-50 text-white font-semibold px-4 py-2.5 rounded-xl text-[13px] transition-all">
-                    {modifying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                    {modifying ? 'Modification…' : 'Appliquer'}
-                  </button>
-                </div>
-              )}
-
-              {/* ── Section Manager ───────────────────────────────────────── */}
-              {html && sections.length > 0 && (
-                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4 flex-shrink-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-2.5">Sections</p>
-
-                  <div className="space-y-1">
-                    {sections.map((sec, idx) => (
-                      <div key={idx}
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] rounded-xl border border-gray-200 dark:border-white/[0.06] hover:border-[#E8A838]/20 transition-all group">
-                        <span className="flex-1 text-[12px] text-gray-700 dark:text-white/70 truncate">{sec.name}</span>
-                        <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => moveSection(idx, -1)} disabled={idx === 0}
-                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white disabled:opacity-30 transition rounded">
-                            <ChevronUp size={12} />
-                          </button>
-                          <button onClick={() => moveSection(idx, 1)} disabled={idx === sections.length - 1}
-                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white disabled:opacity-30 transition rounded">
-                            <ChevronDown size={12} />
-                          </button>
-                          <button onClick={() => toggleSection(sec)}
-                            className={`w-6 h-6 flex items-center justify-center transition rounded ${sec.visible ? 'text-[#E8A838]' : 'text-gray-300 dark:text-white/20 hover:text-gray-500'}`}
-                            title={sec.visible ? 'Masquer' : 'Afficher'}>
-                            {sec.visible ? <Eye size={12} /> : <EyeOff size={12} />}
-                          </button>
-                          <button onClick={() => deleteSection(sec)}
-                            className="w-6 h-6 flex items-center justify-center text-gray-300 dark:text-white/20 hover:text-red-400 transition rounded">
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Add section */}
-                  <div className="relative mt-3">
-                    <button onClick={() => setAddSectionOpen(o => !o)} disabled={modifying}
-                      className="flex items-center gap-1.5 text-[12px] text-gray-400 dark:text-white/30 hover:text-[#E8A838] border border-dashed border-gray-300 dark:border-white/20 hover:border-[#E8A838]/40 px-3 py-1.5 rounded-xl transition-all disabled:opacity-40">
-                      <Plus size={12} /> Ajouter une section
-                    </button>
-                    {addSectionOpen && (
-                      <div className="absolute left-0 top-10 z-10 bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl p-2 flex flex-wrap gap-1 w-60">
-                        {SECTION_TYPES.map(type => (
-                          <button key={type} onClick={() => addSection(type)}
-                            className="px-2.5 py-1.5 text-[12px] text-gray-700 dark:text-white/70 hover:bg-[#E8A838]/10 hover:text-[#E8A838] rounded-lg transition-all w-full text-left">
-                            {type}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Style Controls ────────────────────────────────────────── */}
-              {html && (
-                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4 flex-shrink-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-white/30 mb-3">Style</p>
-
-                  <div className="space-y-3">
-                    {/* Primary color */}
-                    <div>
-                      <p className="text-[11px] text-gray-500 dark:text-white/40 mb-1.5 flex items-center gap-1.5">
-                        <Palette size={10} /> Couleur principale
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <input type="color" value={styles.primaryColor}
-                          onChange={e => setStyles(s => ({ ...s, primaryColor: e.target.value }))}
-                          className="w-9 h-8 rounded-lg cursor-pointer border border-gray-200 dark:border-white/10 bg-transparent p-0.5" />
-                        <span className="text-[11px] font-mono text-gray-500 dark:text-white/30">{styles.primaryColor.toUpperCase()}</span>
-                      </div>
-                    </div>
-
-                    {/* Background color */}
-                    <div>
-                      <p className="text-[11px] text-gray-500 dark:text-white/40 mb-1.5 flex items-center gap-1.5">
-                        <Palette size={10} /> Couleur de fond
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <input type="color" value={styles.bgColor}
-                          onChange={e => setStyles(s => ({ ...s, bgColor: e.target.value }))}
-                          className="w-9 h-8 rounded-lg cursor-pointer border border-gray-200 dark:border-white/10 bg-transparent p-0.5" />
-                        <span className="text-[11px] font-mono text-gray-500 dark:text-white/30">{styles.bgColor.toUpperCase()}</span>
-                      </div>
-                    </div>
-
-                    {/* Font */}
-                    <div>
-                      <p className="text-[11px] text-gray-500 dark:text-white/40 mb-1.5 flex items-center gap-1.5">
-                        <Type size={10} /> Police
-                      </p>
-                      <select value={styles.fontFamily}
-                        onChange={e => setStyles(s => ({ ...s, fontFamily: e.target.value }))}
-                        className="w-full px-2.5 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-[12px] text-gray-900 dark:text-white focus:outline-none focus:border-[#E8A838]/60 transition">
-                        {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={applyStyles}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-[#0A0A0A] dark:bg-white/[0.08] hover:bg-[#1a1a1a] dark:hover:bg-white/[0.12] text-white font-semibold px-3 py-2 rounded-xl text-[12px] transition-all">
-                      <Check size={12} /> Appliquer
-                    </button>
-                    <button
-                      onClick={() => setStyles({ primaryColor: '#E8A838', bgColor: '#0A0A0A', fontFamily: 'Inter' })}
-                      className="px-3 py-2 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/40 hover:text-gray-700 dark:hover:text-white text-[12px] rounded-xl transition-all">
-                      Réinitialiser
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Code actions ──────────────────────────────────────────── */}
-              {html && (
-                <div className="flex gap-2 flex-shrink-0 pb-3">
-                  <button
-                    onClick={() => { const b = new Blob([html], { type: 'text/html' }); window.open(URL.createObjectURL(b), '_blank') }}
-                    className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/10 px-3 py-2 rounded-xl transition-all">
-                    <ExternalLink size={12} /> Ouvrir
-                  </button>
-                  <button onClick={() => { navigator.clipboard.writeText(html); toast.success('Code copié') }}
-                    className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/10 px-3 py-2 rounded-xl transition-all">
-                    <Copy size={12} /> Copier le code
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT PANEL — Live iframe preview */}
-            <div className={`flex-1 min-w-0 flex flex-col ${html && mobileView === 'editor' ? 'hidden lg:flex' : 'flex'}`}>
-              <div className="flex-1 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl overflow-hidden relative">
+              {/* iframe area */}
+              <div className="flex-1 bg-gray-100 dark:bg-[#0a0a0a] rounded-2xl overflow-hidden flex items-start justify-center relative">
 
                 {/* Empty state */}
-                {!html && !generating && (
+                {!html && !generating && !voiceRecording && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                     <div className="w-16 h-16 rounded-2xl bg-[#E8A838]/10 flex items-center justify-center mb-4">
-                      <Wand2 size={28} className="text-[#E8A838]" />
+                      <Mic size={28} className="text-[#E8A838]" />
                     </div>
-                    <p className="text-gray-500 dark:text-white/30 text-[14px] font-semibold mb-2">Aperçu du site</p>
+                    <p className="text-gray-500 dark:text-white/30 text-[14px] font-semibold mb-2">Prêt à générer</p>
                     <p className="text-gray-400 dark:text-white/20 text-[12px] max-w-xs leading-relaxed">
-                      Générez un site avec l'IA, puis cliquez sur n'importe quel élément du site pour le modifier directement.
+                      Cliquez sur le micro et décrivez votre site en Darija, Français ou Anglais.
+                      Ou utilisez le prompt détaillé pour plus de contrôle.
                     </p>
+                  </div>
+                )}
+
+                {/* Voice recording state overlay */}
+                {voiceRecording && !html && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl">
+                    <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center animate-pulse mb-4">
+                      <Mic size={32} className="text-red-400" />
+                    </div>
+                    <p className="text-white font-semibold text-[15px]">En écoute…</p>
+                    <p className="text-white/40 text-[12px] mt-1">Parlez maintenant</p>
                   </div>
                 )}
 
@@ -652,21 +904,28 @@ export default function Sites() {
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 rounded-2xl">
                     <Loader2 size={36} className="animate-spin text-[#E8A838] mb-3" />
                     <p className="text-white font-medium text-[13px]">
-                      {generating ? 'Claude génère votre site…' : 'Application en cours…'}
+                      {generating ? 'Génération en cours…' : 'Application en cours…'}
                     </p>
-                    <p className="text-white/40 text-[11px] mt-1">Cela peut prendre 10–30 secondes</p>
+                    <p className="text-white/40 text-[11px] mt-1">10–30 secondes</p>
                   </div>
                 )}
 
-                {/* iframe */}
+                {/* iframe with device width constraint */}
                 {html && (
-                  <iframe
-                    ref={iframeRef}
-                    srcDoc={srcdoc}
-                    title="Aperçu du site"
-                    className="w-full h-full border-0"
-                    sandbox="allow-scripts allow-same-origin allow-forms"
-                  />
+                  <div className="w-full h-full flex items-start justify-center overflow-auto">
+                    <div
+                      className="h-full transition-all duration-300 shadow-2xl"
+                      style={{ width: DEVICE_WIDTHS[deviceMode], minWidth: deviceMode !== 'desktop' ? DEVICE_WIDTHS[deviceMode] : undefined }}
+                    >
+                      <iframe
+                        ref={iframeRef}
+                        srcDoc={srcdoc}
+                        title="Aperçu du site"
+                        className="w-full h-full border-0 bg-white"
+                        sandbox="allow-scripts allow-same-origin allow-forms"
+                      />
+                    </div>
+                  </div>
                 )}
 
                 {/* Click-to-edit floating panel */}
@@ -679,8 +938,7 @@ export default function Sites() {
                         </p>
                         <p className="text-[11px] text-gray-400 dark:text-white/30">Entrée ou ✓ pour confirmer</p>
                       </div>
-                      <button onClick={() => setEditPanel(null)}
-                        className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition ml-4 mt-0.5">
+                      <button onClick={() => setEditPanel(null)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white transition ml-4">
                         <X size={15} />
                       </button>
                     </div>
@@ -707,35 +965,6 @@ export default function Sites() {
               </div>
             </div>
           </div>
-
-          {/* ── Publish bar ──────────────────────────────────────────────────── */}
-          {html && (
-            <div className="flex-shrink-0 bg-[#0A0A0A] dark:bg-[#111] border border-white/[0.08] rounded-2xl px-5 py-3.5 flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-semibold text-[13px]">
-                  Publier sur <span className="text-[#E8A838]">{slug}.archicrm.ma</span>
-                </p>
-                {publishedAt && (
-                  <p className="text-white/30 text-[11px] mt-0.5">
-                    Dernière publication : {publishedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {publishedUrl && (
-                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-[12px] text-[#E8A838] border border-[#E8A838]/30 px-3 py-2 rounded-xl hover:bg-[#E8A838]/10 transition-all whitespace-nowrap">
-                    <ExternalLink size={12} /> Ouvrir le site
-                  </a>
-                )}
-                <button onClick={publish} disabled={publishing}
-                  className="flex items-center gap-2 bg-[#E8A838] hover:bg-[#d4952a] disabled:opacity-50 text-[#0A0A0A] font-bold px-5 py-2.5 rounded-xl text-[13px] transition-all active:scale-95 whitespace-nowrap">
-                  {publishing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                  {publishing ? 'Publication…' : 'Publier'}
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

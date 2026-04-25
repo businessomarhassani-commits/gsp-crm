@@ -62,9 +62,14 @@ router.get('/my-data', auth, async (req, res) => {
   }
 })
 
+// System prompts
+const SYSTEM_PROMPT_DEFAULT = `You are an expert web developer specializing in beautiful, conversion-optimized websites for Moroccan architecture firms. Generate complete, self-contained HTML files with embedded CSS and JavaScript. Use modern design: dark elegant style with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. All text in French unless the prompt specifies otherwise. Make it look premium and professional. Return ONLY the complete HTML code, nothing else, no explanations, no markdown. Start with <!DOCTYPE html>`
+
+const SYSTEM_PROMPT_VOICE = `You are an expert web developer. The user spoke in Moroccan Darija, French, or Arabic describing what they want on their website. Extract their intent and generate a complete, professional, self-contained HTML website for a Moroccan architecture firm. Use dark elegant design with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. Include: hero section, about, services, portfolio, and contact form. Return ONLY the complete HTML, nothing else. Start with <!DOCTYPE html>`
+
 // ─── POST /api/sites/generate — call Anthropic Claude ────────────────────────
 router.post('/generate', auth, async (req, res) => {
-  const { prompt } = req.body
+  const { prompt, voice } = req.body
   if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt requis' })
 
   // Guard: API key must be configured
@@ -83,17 +88,18 @@ router.post('/generate', auth, async (req, res) => {
     return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
   }
 
-  // Try claude-opus-4-5 first, fall back to claude-sonnet-4-5
-  const MODELS = ['claude-opus-4-5', 'claude-sonnet-4-5']
+  const systemPrompt = voice === true ? SYSTEM_PROMPT_VOICE : SYSTEM_PROMPT_DEFAULT
+  // Try claude-sonnet-4-5 first, fall back to claude-opus-4-5
+  const MODELS = ['claude-sonnet-4-5', 'claude-opus-4-5']
   let lastErr = null
 
   for (const model of MODELS) {
     try {
-      console.log(`[sites/generate] Trying model: ${model}`)
+      console.log(`[sites/generate] Trying model: ${model} voice:${!!voice}`)
       const message = await anthropic.messages.create({
         model,
         max_tokens: 8000,
-        system: `You are an expert web developer specializing in beautiful, conversion-optimized websites for Moroccan architecture firms. Generate complete, self-contained HTML files with embedded CSS and JavaScript. Use modern design: dark elegant style with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. All text in French. Make it look premium and professional. Return ONLY the complete HTML code, nothing else, no explanations, no markdown.`,
+        system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
       })
 
@@ -138,7 +144,7 @@ router.post('/modify', auth, async (req, res) => {
     return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
   }
 
-  const MODELS = ['claude-opus-4-5', 'claude-sonnet-4-5']
+  const MODELS = ['claude-sonnet-4-5', 'claude-opus-4-5']
   let lastErr = null
 
   for (const model of MODELS) {
