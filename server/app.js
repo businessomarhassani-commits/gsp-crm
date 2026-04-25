@@ -13,6 +13,8 @@ const adminTeamRoutes = require('./routes/adminTeam')
 const adminRoutes = require('./routes/admin')
 const metaRoutes = require('./routes/meta')
 const webhookRoutes = require('./routes/webhook')
+const landingContentRoutes = require('./routes/landingContent')
+const sitesRoutes = require('./routes/sites')
 const { apiKeyAuth: _unused } = require('./middleware/auth') // kept for potential future use
 
 const app = express()
@@ -45,6 +47,8 @@ app.use('/api/admin/team', adminTeamRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/meta', metaRoutes)
 app.use('/api/webhook', webhookRoutes)
+app.use('/api', landingContentRoutes)
+app.use('/api/sites', sitesRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'ArchiCRM' }))

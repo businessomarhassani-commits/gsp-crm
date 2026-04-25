@@ -23,6 +23,7 @@ import AdminTeam from './pages/AdminTeam'
 import AdminLandingEditor from './pages/AdminLandingEditor'
 import Integrations from './pages/Integrations'
 import UserSettings from './pages/UserSettings'
+import Sites from './pages/Sites'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import LandingPage from './pages/LandingPage'
@@ -69,12 +70,13 @@ function LandingAppRoutes() {
 // ────────────────────────────────────────────────────────────────────────────
 
 // Protects CRM pages — unauthenticated → back to login (/)
-function CRMRoute({ children }) {
+function CRMRoute({ children, adminOnly = false }) {
   const { user, token, loading, authError } = useAuth()
   if (loading) return <Loader />
   if (authError === 'invalid_admin_token') return <Navigate to="/?session_error=1" replace />
   if (!token) return <Navigate to="/" replace />
-  if (user?.role === 'admin') return <Navigate to="/" replace />
+  // adminOnly routes require role admin or superadmin
+  if (adminOnly && user?.role !== 'admin' && user?.role !== 'superadmin') return <Navigate to="/dashboard" replace />
   return <Layout>{children}</Layout>
 }
 
@@ -109,6 +111,7 @@ function CRMAppRoutes() {
       <Route path="/finance"     element={<CRMRoute><Finance /></CRMRoute>} />
       <Route path="/integrations" element={<CRMRoute><Integrations /></CRMRoute>} />
       <Route path="/settings"    element={<CRMRoute><UserSettings /></CRMRoute>} />
+      <Route path="/sites"       element={<CRMRoute adminOnly><Sites /></CRMRoute>} />
 
       {/* Public pages also available inside CRM subdomain */}
       <Route path="/privacy" element={<Privacy />} />
