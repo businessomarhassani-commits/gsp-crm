@@ -23,9 +23,9 @@ const PALETTES = [
 const DEVICE_WIDTHS = { desktop: '100%', tablet: '768px', mobile: '375px' }
 
 const VOICE_LANG_OPTIONS = [
-  { lang: 'ar',    label: 'الدارجة', hint: 'Darija'   },
-  { lang: 'fr-FR', label: 'Français', hint: 'Français' },
-  { lang: 'en-US', label: 'English',  hint: 'English'  },
+  { id: 'darija',  label: 'الدارجة', hint: 'Darija'   },
+  { id: 'french',  label: 'Français', hint: 'Français' },
+  { id: 'english', label: 'English',  hint: 'English'  },
 ]
 
 const MODIFY_CHIPS = [
@@ -445,13 +445,14 @@ export default function Sites() {
   const [modifyPrompt, setModifyPrompt] = useState('')
 
   // Voice
-  const [voiceLang, setVoiceLang]         = useState('ar')
-  const [voiceRecording, setVoiceRecording] = useState(false)
-  const [voiceTranscriptDisplay, setVoiceTranscriptDisplay] = useState('')
-  const voiceRecRef       = useRef(null)
-  const voiceTranscriptRef  = useRef('')    // final text accumulator (avoids stale closure)
-  const voiceManualStopRef  = useRef(false) // true when user clicks Stop — prevents onend from advancing
-  const voiceLangRef        = useRef('ar')  // always-current lang for use inside callbacks
+  const [selectedLanguage, setSelectedLanguage] = useState('darija')
+  const [isRecording, setIsRecording]           = useState(false)
+  const [voiceTranscript, setVoiceTranscript]   = useState('')
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const recognitionRef    = useRef(null)
+  const isRecordingRef    = useRef(false)   // ref-based flag so onend closure is always current
+  const transcriptRef     = useRef('')      // accumulates final results (no stale closure)
+  const recordingTimerRef = useRef(null)
 
   // Form builder (landing only)
   const [presetQuestions, setPresetQuestions] = useState(
@@ -498,9 +499,6 @@ export default function Sites() {
     setCustomPrompt(buildLandingPrompt(siteData, fields))
   }, [presetQuestions, customQuestions, siteData, tab])
 
-  // ── Sync voiceLangRef whenever state changes ───────────────────────────────
-  useEffect(() => { voiceLangRef.current = voiceLang }, [voiceLang])
-
   // ── Close edit panel on HTML change ───────────────────────────────────────
   useEffect(() => { setEditPanel(null) }, [html])
 
@@ -532,74 +530,102 @@ export default function Sites() {
   }
 
   // ── Voice ──────────────────────────────────────────────────────────────────
-  // generateFromVoice: accepts lang as param (avoids stale-closure on voiceLang state)
-  const generateFromVoice = useCallback(async (transcript, lang) => {
+  const generateFromVoice = useCallback(async (transcript) => {
     setGenerating(true)
+    const langMap = { darija: 'ar', french: 'fr-FR', english: 'en-US' }
     try {
       const { data } = await api.post('/api/sites/generate', {
-        prompt: transcript, voice: true, type: tab, voiceLang: lang,
+        prompt: transcript, voice: true, type: tab,
+        voiceLang: langMap[selectedLanguage] || 'ar',
       })
       handleGenerated(data.html || '')
       toast.success('Site généré !')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur lors de la génération')
     } finally { setGenerating(false) }
-  }, [handleGenerated, tab])
+  }, [handleGenerated, tab, selectedLanguage])
 
-  // stopVoice: manual stop → grab transcript + current lang → generate
-  const stopVoice = useCallback(() => {
-    voiceManualStopRef.current = true
-    voiceRecRef.current?.stop()
-    setVoiceRecording(false)
-    const t    = voiceTranscriptRef.current
-    const lang = voiceLangRef.current
-    voiceTranscriptRef.current = ''
-    setVoiceTranscriptDisplay('')
-    if (t.trim()) generateFromVoice(t.trim(), lang)
+  const startVoiceRecording = useCallback((language) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) {
+      toast.error('Reconnaissance vocale non supportée. Utilisez Chrome.')
+      return
+    }
+
+    const recognition = new SR()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
+
+    if (language === 'darija')      recognition.lang = 'ar'
+    else if (language === 'french') recognition.lang = 'fr-FR'
+    else                             recognition.lang = 'en-US'
+
+    transcriptRef.current = ''
+    setRecordingSeconds(0)
+
+    recognition.onresult = (event) => {
+      let finalTranscript = '', interimTranscript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) finalTranscript  += event.results[i][0].transcript
+        else                           interimTranscript += event.results[i][0].transcript
+      }
+      if (finalTranscript) transcriptRef.current += ' ' + finalTranscript
+      setVoiceTranscript((transcriptRef.current + ' ' + interimTranscript).trim())
+    }
+
+    recognition.onerror = (event) => {
+      // Ignore non-fatal errors — let onend auto-restart handle them
+      if (event.error === 'no-speech') return
+      if (event.error === 'network') return
+      if (['not-allowed', 'service-not-allowed'].includes(event.error)) {
+        toast.error('Accès au microphone refusé')
+        isRecordingRef.current = false
+        setIsRecording(false)
+        clearInterval(recordingTimerRef.current)
+      }
+      console.log('[voice] error:', event.error)
+    }
+
+    recognition.onend = () => {
+      // Key fix: if user hasn't manually stopped, restart immediately (browser stops after silence)
+      if (isRecordingRef.current) {
+        try { recognition.start() } catch (e) { /* already started */ }
+      }
+    }
+
+    recognition.start()
+    recognitionRef.current = recognition
+    isRecordingRef.current = true
+    setIsRecording(true)
+
+    // Tick timer every second
+    recordingTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+  }, [])
+
+  const stopVoiceRecording = useCallback(async () => {
+    isRecordingRef.current = false  // prevent onend from restarting
+    setIsRecording(false)
+    clearInterval(recordingTimerRef.current)
+    setRecordingSeconds(0)
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+
+    const transcript = transcriptRef.current.trim()
+    transcriptRef.current = ''
+    setVoiceTranscript('')
+
+    if (!transcript) { toast.error('Aucune parole détectée'); return }
+    await generateFromVoice(transcript)
   }, [generateFromVoice])
 
-  // startVoice: single-language, continuous, manual stop only
-  const startVoice = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { toast.error('Microphone non supporté par ce navigateur'); return }
-
-    voiceManualStopRef.current = false
-    voiceTranscriptRef.current = ''
-    setVoiceTranscriptDisplay('')
-
-    const rec = new SR()
-    rec.lang          = voiceLangRef.current
-    rec.continuous    = true   // keep listening until user manually stops
-    rec.interimResults = true  // show live transcript
-
-    rec.onresult = e => {
-      let finalText = '', interimText = ''
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText  += e.results[i][0].transcript + ' '
-        else                       interimText += e.results[i][0].transcript
-      }
-      voiceTranscriptRef.current = finalText.trim()
-      setVoiceTranscriptDisplay((finalText + interimText).trim())
-    }
-
-    rec.onerror = e => {
-      if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
-        toast.error('Accès au microphone refusé')
-      } else if (e.error === 'language-not-supported') {
-        toast.error('Langue non supportée par votre navigateur')
-      }
-      setVoiceRecording(false)
-    }
-
-    rec.onend = () => {
-      // Only handle unexpected ends (manual stop is handled in stopVoice)
-      if (!voiceManualStopRef.current) setVoiceRecording(false)
-    }
-
-    voiceRecRef.current = rec
-    try { rec.start(); setVoiceRecording(true) }
-    catch { toast.error('Impossible de démarrer le microphone'); setVoiceRecording(false) }
-  }, [])
+  const handleMicClick = useCallback(() => {
+    if (isRecordingRef.current) stopVoiceRecording()
+    else                         startVoiceRecording(selectedLanguage)
+  }, [selectedLanguage, startVoiceRecording, stopVoiceRecording])
 
   // ── Generate from prompt ───────────────────────────────────────────────────
   const generateFromPrompt = async () => {
@@ -738,74 +764,70 @@ export default function Sites() {
 
                   {/* Language selector buttons */}
                   <div className="flex gap-1.5 justify-center mb-4">
-                    {VOICE_LANG_OPTIONS.map(({ lang, label }) => (
-                      <button
-                        key={lang}
-                        onClick={() => setVoiceLang(lang)}
-                        disabled={voiceRecording || generating || modifying}
+                    {VOICE_LANG_OPTIONS.map(({ id, label }) => (
+                      <button key={id} onClick={() => setSelectedLanguage(id)}
+                        disabled={isRecording || generating || modifying}
                         className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all
-                          ${voiceLang === lang
+                          ${selectedLanguage === id
                             ? 'bg-[#E8A838] border-[#E8A838] text-[#0A0A0A]'
                             : 'bg-transparent border-gray-200 dark:border-white/[0.12] text-gray-500 dark:text-white/40 hover:border-[#E8A838]/40 hover:text-[#E8A838]'}
-                          disabled:opacity-40 disabled:cursor-not-allowed`}
-                      >
+                          disabled:opacity-40 disabled:cursor-not-allowed`}>
                         {label}
                       </button>
                     ))}
                   </div>
 
                   {/* Mic button */}
-                  <button
-                    onClick={voiceRecording ? stopVoice : startVoice}
-                    disabled={generating || modifying}
+                  <button onClick={handleMicClick} disabled={generating || modifying}
                     className={`w-14 h-14 rounded-full mx-auto flex items-center justify-center transition-all
-                      ${voiceRecording
+                      ${isRecording
                         ? 'bg-red-500 shadow-lg shadow-red-500/40 scale-105'
                         : 'bg-[#E8A838] hover:bg-[#d4952a] shadow-lg shadow-[#E8A838]/30 hover:scale-105 active:scale-95'}
-                      disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {voiceRecording ? <MicOff size={22} className="text-white" /> : <Mic size={22} className="text-[#0A0A0A]" />}
+                      disabled:opacity-50 disabled:cursor-not-allowed`}>
+                    {isRecording ? <MicOff size={22} className="text-white" /> : <Mic size={22} className="text-[#0A0A0A]" />}
                   </button>
 
-                  {/* Recording indicator */}
-                  {voiceRecording && (
+                  {/* Recording indicator + timer */}
+                  {isRecording && (
                     <div className="flex items-center justify-center gap-2 mt-3">
                       <span className="w-2 h-2 rounded-full bg-red-500" style={{ animation: 'recPulse 1s ease-in-out infinite' }} />
-                      <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">Enregistrement…</span>
+                      <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">Enregistrement</span>
+                      <span className="text-[11px] font-mono text-red-400">
+                        {`${Math.floor(recordingSeconds/60).toString().padStart(2,'0')}:${(recordingSeconds%60).toString().padStart(2,'0')}`}
+                      </span>
                     </div>
                   )}
 
                   {/* Waveform bars */}
-                  {voiceRecording && (
+                  {isRecording && (
                     <div className="flex items-center justify-center gap-[3px] h-6 mt-2">
                       {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.4, 0.7, 0.9].map((h, i) => (
                         <div key={i} className="w-[3px] rounded-full bg-red-400"
-                          style={{ height: `${h * 22}px`, animation: 'waveBar 0.7s ease-in-out infinite', animationDelay: `${i * 70}ms` }}
-                        />
+                          style={{ height: `${h * 22}px`, animation: 'waveBar 0.7s ease-in-out infinite', animationDelay: `${i * 70}ms` }} />
                       ))}
                     </div>
                   )}
 
-                  {/* Status + lang label */}
+                  {/* Status */}
                   <p className="text-[12px] font-semibold text-gray-900 dark:text-white mt-2.5 mb-0.5">
-                    {voiceRecording
-                      ? `Parlez en ${VOICE_LANG_OPTIONS.find(o => o.lang === voiceLang)?.hint}…`
+                    {isRecording
+                      ? `Parlez en ${VOICE_LANG_OPTIONS.find(o => o.id === selectedLanguage)?.hint}…`
                       : generating ? 'Génération en cours…'
                       : 'Appuyez et parlez'}
                   </p>
 
                   {/* Live transcript */}
-                  {voiceRecording && voiceTranscriptDisplay && (
+                  {isRecording && voiceTranscript && (
                     <p className="text-[11px] text-[#E8A838]/80 mt-1 px-3 max-h-10 overflow-hidden leading-relaxed italic">
-                      &ldquo;{voiceTranscriptDisplay}&rdquo;
+                      &ldquo;{voiceTranscript}&rdquo;
                     </p>
                   )}
 
-                  {/* Stop button */}
-                  {voiceRecording ? (
-                    <button onClick={stopVoice}
-                      className="mt-3 flex items-center gap-1.5 mx-auto bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/60 rounded-xl px-4 py-1.5 text-[12px] font-semibold transition-all">
-                      <MicOff size={12} /> Arrêt
+                  {/* Stop & generate button */}
+                  {isRecording ? (
+                    <button onClick={stopVoiceRecording}
+                      className="mt-3 flex items-center gap-1.5 mx-auto bg-red-500 hover:bg-red-600 text-white rounded-xl px-5 py-2 text-[13px] font-bold shadow-lg shadow-red-500/30 transition-all active:scale-95">
+                      <MicOff size={14} /> Arrêter et Générer
                     </button>
                   ) : (
                     !generating && (

@@ -63,160 +63,155 @@ router.get('/my-data', auth, async (req, res) => {
 })
 
 // ─── System prompts ───────────────────────────────────────────────────────────
-const SYSTEM_PROMPT_VITRINE = `You are an expert luxury web developer. Generate a COMPLETE, fully-styled, self-contained HTML portfolio website for a Moroccan architect. This must look like it cost 50,000 DH to build.
+const SYSTEM_PROMPT_VITRINE = `CRITICAL: Generate a COMPLETE full-length HTML portfolio website. Do not stop. Do not truncate. Include all 10 sections fully implemented. Minimum 800 lines.
 
-STRICT RULES:
-- NO emojis anywhere in the page. Instead use: SVG icons inline for features, CSS shapes for decorative elements, Unicode checkmarks (✓) and arrows (→), CSS red border + bold text for urgency sections, CSS gold stars (★) for ratings
-- Use exact image URLs provided below — do NOT use source.unsplash.com or generate/guess any URLs
-- All CSS must be embedded in <style> tags in <head>
-- All JavaScript must be embedded in <script> tags before </body>
-- Return ONLY complete HTML starting with <!DOCTYPE html>
+You are an expert luxury web developer. Generate a premium portfolio website for a Moroccan architect. This must look like it cost 50,000 DH to build.
 
-DESIGN SYSTEM:
-- Colors: --dark:#0A0A0A; --darker:#050505; --gold:#E8A838; --gold-light:#F0C060; --text:#FFFFFF; --text-muted:#888888; --card:#111111; --border:#1E1E1E;
-- Font: Inter from Google Fonts
-- Border radius: 12px cards, 8px buttons
-- Transitions: all 0.3s ease
-- Box shadows: 0 4px 24px rgba(0,0,0,0.4)
+Architect data provided in the user message below.
+API endpoint: provided in user message.
+API key: provided in user message.
 
-SECTIONS:
+DESIGN SYSTEM (use CSS variables in :root):
+--gold:#E8A838; --gold-light:#F5C842; --dark:#0A0A0A; --darker:#050505; --card:#111111; --card-hover:#161616; --border:#1E1E1E; --text:#FFFFFF; --text-muted:#888888; --red:#C0392B; --green:#27AE60;
+FONT: Inter from Google Fonts. NO EMOJIS. SVG icons only. ★ for stars.
 
-1. FIXED NAVBAR:
-- Background: rgba(10,10,10,0.95) backdrop-filter:blur(20px)
-- 2px gold bottom border
-- Logo: architect name white + 'ARCHITECTE' in gold small caps
-- Links: Accueil, A Propos, Services, Portfolio, Temoignages, Contact
-- CTA button gold 'Demander un Devis'
-- Mobile: hamburger menu with JS toggle
+IMAGES — use exact URLs:
+Hero bg: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+Portfolio (use all 6 as <img> object-fit:cover aspect-ratio:4/3):
+  https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=600&fit=crop&q=80
+About image: https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&h=600&fit=crop&q=80
 
-2. HERO (100vh):
-- Background image: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
-- Use as CSS background-image on hero div with overlay: linear-gradient(135deg, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.65) 100%)
-- Small gold badge: 'ARCHITECTE DIPLOME D ETAT - MAROC' with gold border
-- H1: large, white, architect name
-- H2: specialty tagline in gold
-- City badge
-- Two CTA buttons: gold primary + outline secondary
-- Scroll indicator: animated gold chevron
+ALL 10 SECTIONS REQUIRED — DO NOT SKIP ANY:
 
-3. STATS BAR (dark background, gold numbers):
-- 4 stats: Projets Realises | Annees d Experience | Clients Satisfaits | Villes Couvertes
-- Use data from the user's prompt
+1. FIXED NAVBAR: rgba(10,10,10,0.97) backdrop-filter:blur(20px), 2px gold bottom border, architect name + 'ARCHITECTE' in gold small-caps, nav links (Accueil/A Propos/Services/Portfolio/Temoignages/Contact), gold 'Demander un Devis' CTA button, mobile hamburger with JS toggle
 
-4. ABOUT SECTION:
-- Two columns: left=portfolio image https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=600&fit=crop&q=80, right=text
-- Bio paragraph, 3 gold-bordered highlight cards: Diplome | Agree | Assure
-- Specialties as tags
+2. HERO (min-height:100vh): CSS background-image on hero with overlay linear-gradient(135deg,rgba(10,10,10,0.92),rgba(10,10,10,0.65)), gold badge 'ARCHITECTE DIPLOME D ETAT', H1 architect name (clamp(2.5rem,5vw,4.5rem)), H2 specialty in gold, dual CTA buttons (gold primary + outline secondary), animated gold scroll chevron
 
-5. SERVICES (3-col grid):
-- Each card: dark bg, 3px gold top border, inline SVG icon (architecture-related), title, description
-- Based on architect's specialties from the prompt
-- Hover: translateY(-4px) + gold box-shadow
+3. STATS BAR (background:#0D0D0D, borders): 4 columns with large gold numbers — projects realised, years experience, clients satisfaits, villes couvertes. Use data from architect's prompt.
 
-6. PORTFOLIO (3-col grid, 2 rows = 6 cards):
-- Use these EXACT images as <img> tags with object-fit:cover, aspect-ratio:4/3:
-  img1: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
-  img2: https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
-  img3: https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
-  img4: https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
-  img5: https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&h=600&fit=crop&q=80
-  img6: https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&h=600&fit=crop&q=80
-- Each: hover overlay (dark 80% + project name + city in white)
+4. ABOUT: two-column (about image left, text right), bio paragraph, 3 gold-bordered credential cards (Diplome/Agree/Assure), specialty tags
 
-7. TESTIMONIALS (3 cards):
-- Names: Karim Bensouda (Casablanca), Nadia El Fassi (Rabat), Youssef Chraibi (Marrakech)
-- Avatars: https://ui-avatars.com/api/?name=X&background=E8A838&color=000&size=60
-- 5 gold stars using ★ symbols
-- Italic quote, dark card, gold left border 3px
+5. SERVICES (3-col grid, 6 cards): dark card, 3px gold top-border, inline architecture SVG icon, title, description. Based on specialties in prompt. Hover: translateY(-4px) + gold glow.
 
-8. CONTACT:
-- Two columns: contact info left (phone, email, city, inline SVG icons), form right
-- Form: Nom, Telephone, Email, Type de projet (select), Message
-- Gold submit button full-width
+6. PORTFOLIO (3-col 2-row = 6 cards): each card has image + hover overlay (dark 80% + project name + city in white)
 
-9. FOOTER:
-- Dark, architect name + tagline, nav links, copyright
+7. TESTIMONIALS (3 cards): Karim Bensouda/Casablanca, Nadia El Fassi/Rabat, Youssef Chraibi/Marrakech. Avatars from ui-avatars.com (bg=E8A838). 5 ★ in gold. Italic quote. Dark card, gold left border.
 
-10. FLOATING WHATSAPP BUTTON:
-- Fixed bottom-right, background #25D366, 60px circle
-- WhatsApp SVG icon (white)
-- Pulse ring animation
+8. PROCESS: 4-step horizontal timeline (01-04), large gold numbers, step title + description, connected by gold line on desktop
 
-ANIMATIONS: Fade-in on scroll via Intersection Observer (add .visible class, CSS opacity:0->1 translateY). Navbar bg changes on scroll. Portfolio hover overlays. Button hover states.`
+9. CONTACT: two-column (info left with SVG icons, form right). Form: Nom/Telephone/Email/Type-projet/Message. Gold submit button. POST to API in prompt.
 
-const SYSTEM_PROMPT_LANDING = `You are an expert conversion rate optimizer. Generate a COMPLETE, high-converting lead generation landing page for a Moroccan architect. This must convert visitors into leads.
+10. FOOTER: dark, architect name + tagline, links, copyright
 
-STRICT RULES:
-- NO emojis — use SVG icons, CSS shapes, ★ for stars, ✓ for checkmarks
-- Use exact image URLs provided below
-- Embedded CSS and JS only
-- Return ONLY complete HTML starting with <!DOCTYPE html>
+FLOATING WHATSAPP: fixed bottom-right, background:#25D366, 60px circle, white WhatsApp SVG, pulse animation
 
-DESIGN SYSTEM:
-- Colors: --dark:#0A0A0A; --gold:#E8A838; --gold-light:#F0C060; --card:#111111; --border:#1E1E1E; --red:#C0392B;
-- Font: Inter from Google Fonts
-- CSS custom properties in :root
+ANIMATIONS: Intersection Observer fade-in (opacity:0→1, translateY(30px)→0) on all sections. Navbar background change on scroll. Portfolio hover overlays.
 
-SECTIONS:
+All CSS in <style>, all JS in <script> before </body>. Fully mobile responsive. Return ONLY complete HTML from <!DOCTYPE html> to </html>. No truncation.`
 
-1. STICKY HEADER (appears after 200px scroll, hidden by default):
-- Fixed top, dark bg, architect name + phone + 'Appeler' CTA button
+const SYSTEM_PROMPT_LANDING = `CRITICAL: Generate a COMPLETE full-length HTML landing page. Do not stop. Do not truncate. Include every section listed below. The page must be at minimum 800 lines of HTML.
 
-2. HERO (100vh):
-- Background: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&h=1080&fit=crop&q=80
-- Use as CSS background-image with overlay rgba(10,10,10,0.85)
-- Pain-focused H1 in French (NOT architect name — address the prospect's problem)
-- Benefit subheadline
-- Large gold CTA button scrolling to form section
-- Trust row: 3 items with inline SVG checkmark icons
+You are an expert conversion rate optimizer. Generate a high-converting lead generation landing page for a Moroccan architect.
 
-3. SOCIAL PROOF BAR (dark): 3 large gold stats
+Architect data, form fields, API endpoint and API key are all provided in the user message below.
 
-4. PROBLEMS SECTION:
-- Title: 'Vous faites face a ces defis ?'
-- 4 problem cards: dark bg, red 3px left border, inline SVG X icon, problem title + description
-- Real Moroccan construction pain points
+DESIGN SYSTEM (CSS :root variables):
+--gold:#E8A838; --gold-light:#F5C842; --dark:#0A0A0A; --darker:#050505; --card:#111111; --card-hover:#161616; --border:#1E1E1E; --text:#FFFFFF; --text-muted:#888888; --red:#C0392B; --green:#27AE60;
+FONT: Inter from Google Fonts. NO EMOJIS. SVG icons only. ★ for stars. CSS shapes for decorative elements.
 
-5. SOLUTION STEPS:
-- Title: 'Notre Approche en 4 Etapes'
-- 4 steps with large gold numbers 01-04, connected by vertical line
-- Each: title + description
+IMAGES — use exact URLs:
+Hero: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&h=1080&fit=crop&q=80
+Section: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+Portfolio strip: https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80 / https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&h=600&fit=crop&q=80 / https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
 
-6. WHY US (feature grid):
-- 6 cards, inline gold SVG checkmark icons, dark cards, hover lift
+ALL 12 SECTIONS REQUIRED — DO NOT SKIP ANY:
 
-7. PORTFOLIO STRIP (horizontal scroll or 3 images):
-- Use: https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
-       https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&h=600&fit=crop&q=80
-       https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
+SECTION 1 - STICKY HEADER (hidden by default, shows after 100px scroll):
+position:fixed; top:0; z-index:1000; width:100%; background:rgba(10,10,10,0.97); backdrop-filter:blur(20px); border-bottom:2px solid var(--gold); padding:12px 40px; display:flex; justify-content:space-between; align-items:center;
+Left: architect name (bold white) + specialty (small gold text)
+Right: phone number + gold 'Appeler Maintenant' button
+JS: window.addEventListener('scroll', () => header.classList.toggle('visible', scrollY>100))
 
-8. TESTIMONIALS: 3 cards, Moroccan names, ★★★★★ in gold
+SECTION 2 - HERO (min-height:100vh):
+background-image: hero URL above, overlay rgba(10,10,10,0.80)
+Centered content (max-width:800px):
+- Small gold badge 'ARCHITECTE AGREE — ORDRE NATIONAL DU MAROC' (border:1px solid gold, padding:8px 20px, border-radius:50px)
+- H1 (font-size:clamp(2.5rem,5vw,4.5rem), font-weight:700): Pain-focused headline NOT architect name. Example: 'Votre Projet du Permis a la Livraison — Sans Stress'
+- H2 subtitle (color:var(--text-muted)): benefit statement
+- Large gold CTA button (padding:18px 48px, font-size:1.1rem, border-radius:8px, href:#lead-form)
+- 3 trust badges row (inline SVG checkmark + text)
 
-9. URGENCY BANNER: dark-red background, bold text about limited availability — NO emojis, use CSS arrow shapes
+SECTION 3 - SOCIAL PROOF BAR (background:#0D0D0D, border-top/bottom:1px solid var(--border)):
+3 columns: large gold numbers + labels (Projects Realises, Ans d Experience, Clients Satisfaits)
+Row 2: 'Membre — Ordre National des Architectes du Maroc'
 
-10. LEAD FORM (most important — id="contact-form"):
-- Centered, max-width 580px
-- Dark card with 3px gold border-top
-- Title: 'Obtenez Votre Consultation Gratuite'
-- Subtitle: 'Repondez a ces questions et nous vous contactons sous 24h'
-- Use EXACTLY the form fields listed in the user's prompt (labels, types, options)
-- Each input: dark bg #1a1a1a, gold border on focus, border-radius 8px, padding 14px, label above
-- Select inputs: same dark styling
-- Submit: full-width gold button with inline arrow SVG, loading state (spinner) on click
-- Success: hide form, show green success message 'Merci ! Nous vous contactons dans les 24h.'
-- Error: show red error message
-- POST JSON to API URL from prompt with X-API-Key header
-- Trust row below button: lock SVG + 3 trust points
+SECTION 4 - PAIN POINTS (background:var(--dark)):
+Title: 'Vous Reconnaissez-Vous ?'
+4 cards (2x2 grid): background:var(--card); border-left:3px solid var(--red); border-radius:12px; padding:24px;
+Inline SVG X icon in red + bold problem title + description
 
-11. FAQ (3-4 questions, accordion):
-- Gold arrow SVG that rotates 90deg on open
-- Common questions about working with a Moroccan architect
+SECTION 5 - SOLUTION PROCESS (background:#080808):
+Title: 'Notre Methode en 4 Etapes'
+4 steps in a row (stack on mobile): large gold number (4rem, opacity:0.3) + step title + description. Connected by gold line on desktop.
 
-12. FOOTER: minimal dark, architect name, copyright
+SECTION 6 - WHY CHOOSE US (background:var(--dark)):
+Title: 'Pourquoi Nous Choisir ?'
+6 cards (3-col desktop): var(--card) bg, border:1px solid var(--border), hover:border-color var(--gold)
+Inline SVG gold checkmark circle + feature title + description
 
-13. FLOATING WHATSAPP: same as vitrine (fixed bottom-right, #25D366, pulse)
+SECTION 7 - RESULTS STATS (background:linear-gradient(135deg,#0D0D0D,#111)):
+Title: 'Nos Resultats Parlent'
+3 large stat cards: gold numbers (4rem), description. Counter animation via Intersection Observer.
 
-JS: smooth scroll, form submit with fetch(), Intersection Observer animations, FAQ accordion, sticky header on scroll`
+SECTION 8 - TESTIMONIALS (background:var(--dark)):
+Title: 'Ce Que Disent Nos Clients'
+3 cards: var(--card) bg, padding:32px, border-radius:16px
+Gold quote marks (4rem, opacity:0.3) + italic review + ★★★★★ gold + avatar (ui-avatars.com bg=E8A838) + name + city
+Names: Karim Bensouda/Casablanca, Nadia El Fassi/Rabat, Youssef Chraibi/Marrakech
+
+SECTION 9 - URGENCY BANNER (background:#1A0500, border:2px solid #C0392B top/bottom):
+CSS red triangle left. Bold text: 'Places Limitees — Nous n acceptons que 3 nouveaux projets par mois'
+Subtext in muted. Gold CTA button.
+
+SECTION 10 - LEAD FORM (id="lead-form", background:var(--darker)):
+Centered container max-width:600px.
+Card: background:var(--card); border-top:3px solid var(--gold); border-radius:16px; padding:48px;
+Title: 'Obtenez Votre Consultation Gratuite' (bold white, 1.8rem)
+Subtitle: 'Repondez a ces questions — nous vous rappelons sous 24h' (muted)
+FORM FIELDS: Use EXACTLY the fields listed in the user message (same labels, types, options)
+  Field wrapper: margin-bottom:20px
+  Label: display:block; color:var(--text-muted); font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px
+  Input/Select/Textarea: width:100%; background:#1A1A1A; border:1px solid var(--border); border-radius:8px; padding:14px 16px; color:white; font-size:1rem
+  Focus: border-color:var(--gold); outline:none; box-shadow:0 0 0 3px rgba(232,168,56,0.1)
+Submit button: width:100%; background:var(--gold); color:#000; font-weight:700; font-size:1.1rem; padding:18px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:8px; border:none; cursor:pointer
+  Include inline arrow SVG icon. Hover: background:var(--gold-light); transform:translateY(-2px)
+  Loading state: show spinner SVG, disable button, text='Envoi en cours...'
+On submit: validate required fields (add red border if empty). POST JSON to API URL from prompt with X-API-Key header.
+On success: hide form div, show success div (green checkmark SVG, 'Merci ! Nous vous contactons sous 24h', green card bg).
+On error: show red error message.
+Trust row below button: SVG lock + 'Donnees securisees' | SVG check + 'Sans engagement' | SVG lightning + 'Reponse sous 24h'
+
+SECTION 11 - FAQ ACCORDION (background:var(--dark)):
+Title: 'Questions Frequentes'
+4 questions about Moroccan architecture services.
+Each: border-bottom:1px solid var(--border); padding:20px 0
+Question: cursor:pointer; display:flex; justify-content:space-between; align-items:center
+SVG chevron rotates 180deg when open. Answer: max-height transition (0 to auto via JS class toggle).
+
+SECTION 12 - FOOTER (background:#050505, border-top:1px solid var(--border)):
+Architect name + tagline. Links row. Copyright 2025.
+
+FLOATING WHATSAPP: position:fixed; bottom:24px; right:24px; z-index:9999; width:60px; height:60px; background:#25D366; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(37,211,102,0.4). White WhatsApp SVG icon. Pulse ring animation (::before pseudo).
+
+SCROLL ANIMATIONS: Intersection Observer on all sections. Start: opacity:0; transform:translateY(30px). Visible: opacity:1; transform:translateY(0); transition:0.6s ease. Stagger children with animation-delay.
+JS also: smooth scroll, sticky header on scroll, FAQ accordion toggle, form submit with fetch(), counter animation.
+
+All CSS in <style> in <head>. All JS in <script> before </body>. Fully mobile responsive. Return ONLY complete HTML from <!DOCTYPE html> to </html>. No truncation.`
 
 // buildVoicePrompt: dynamic system prompt that names the detected language
 function buildVoicePrompt(voiceLang) {
@@ -225,35 +220,30 @@ function buildVoicePrompt(voiceLang) {
     voiceLang === 'fr-FR' ? 'French' :
     voiceLang === 'en-US' ? 'English' : 'Moroccan Darija'
 
-  return `You are an expert luxury web developer specializing in high-converting websites for Moroccan architecture firms. The user described what they want verbally in ${langLabel}.
+  return `CRITICAL: Generate a COMPLETE HTML page. Do not stop early. Do not truncate. Every section fully implemented.
 
-IMPORTANT LANGUAGE NOTES:
-- If Darija/Arabic: understand mixed Arabic-French-Darija instructions
-  Common Darija: bghit=I want, dir/diri=make, zwin=beautiful, professional=احترافي, landing page=صفحة هبوط, leads=عملاء محتملين, lmohandis=the architect, khdm=work on, bla=without, m3a=with, hsen=better, kbir=big, sghir=small, raki=you are, bghina=we want
-- Extract the full intent even from imperfect speech recognition
+The user spoke in ${langLabel} and their request is in the user message below.
 
-STRICT RULES:
-- NO emojis anywhere — SVG icons only
-- Use exact Unsplash image URLs provided below (images.unsplash.com only)
-- All CSS embedded in <style> tags, all JS in <script> tags before </body>
+Darija glossary: bghit=I want, dir/diri=make, zwin=beautiful, landing page=lead capture page, lmohandis=the architect, leads=prospects, khdm=work on, bla=without, m3a=with, hsen=better/improve, kbir=big, sghir=small, bghina=we want, professional=احترافي
 
-GENERATE a COMPLETE, self-contained HTML page with:
-- Premium dark design (#0A0A0A background, #E8A838 gold accents, Inter font from Google Fonts)
-- Fully mobile responsive
-- High-converting structure if landing page requested; professional portfolio if website requested
-- Fixed navbar, hero (100vh) with background-image + dark overlay, about/services sections, portfolio grid, testimonials, contact form
-- Hero background: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
-- Portfolio images (use as <img> tags, object-fit:cover):
-  https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
-  https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
-  https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
-  https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
-- WhatsApp float button (fixed bottom-right, #25D366, pulse animation)
-- Intersection Observer scroll animations
-- Form submission to architect's API endpoint if a form is needed
-- Smooth scroll, hover effects, mobile hamburger menu
+Understand their full intent even from imperfect speech recognition.
 
-Return ONLY complete HTML starting with <!DOCTYPE html>. No markdown. No backticks. No explanations.`
+Generate either:
+- A FULL landing page (if they want leads/landing/capture/form)
+- A FULL portfolio site (if they want website/vitrine/portfolio)
+
+DESIGN: dark #0A0A0A background, gold #E8A838 accents, Inter from Google Fonts, NO emojis (SVG icons only).
+IMAGES — use exact URLs (images.unsplash.com only):
+  Hero: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+  Portfolio: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
+             https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
+             https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
+             https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
+
+Include all appropriate sections: fixed navbar, hero (100vh with bg-image + overlay), about, services (SVG icons), portfolio grid, testimonials (★ stars), contact form, WhatsApp float button, Intersection Observer animations.
+All CSS in <style>, all JS in <script> before </body>. Fully mobile responsive.
+
+Return ONLY complete HTML from <!DOCTYPE html> to </html>. No markdown. No backticks.`
 }
 
 // ─── POST /api/sites/generate — call Anthropic Claude ────────────────────────
@@ -282,8 +272,8 @@ router.post('/generate', auth, async (req, res) => {
   if (voice === true) systemPrompt = buildVoicePrompt(voiceLang || 'ar')
   else if (type === 'landing') systemPrompt = SYSTEM_PROMPT_LANDING
   else systemPrompt = SYSTEM_PROMPT_VITRINE
-  // Try claude-sonnet-4-5 first, fall back to claude-opus-4-5
-  const MODELS = ['claude-sonnet-4-5', 'claude-opus-4-5']
+  // Opus first for longer/richer output, sonnet as fallback
+  const MODELS = ['claude-opus-4-5', 'claude-sonnet-4-5']
   let lastErr = null
 
   for (const model of MODELS) {
@@ -291,7 +281,7 @@ router.post('/generate', auth, async (req, res) => {
       console.log(`[sites/generate] Trying model: ${model} voice:${!!voice}`)
       const message = await anthropic.messages.create({
         model,
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
       })
