@@ -218,17 +218,47 @@ SECTIONS:
 
 JS: smooth scroll, form submit with fetch(), Intersection Observer animations, FAQ accordion, sticky header on scroll`
 
-const SYSTEM_PROMPT_VOICE = `You are an expert web developer. The user spoke in Moroccan Darija (Moroccan Arabic dialect mixed with French). Understand their intent fully even if the transcription is imperfect.
+// buildVoicePrompt: dynamic system prompt that names the detected language
+function buildVoicePrompt(voiceLang) {
+  const langLabel =
+    voiceLang === 'ar'    ? 'Moroccan Darija (Arabic/French mix)' :
+    voiceLang === 'fr-FR' ? 'French' :
+    voiceLang === 'en-US' ? 'English' : 'Moroccan Darija'
 
-Common Darija words: bghit=I want, dir=make/do, zwin=beautiful, kbir=big, sghir=small, lmohandis=the architect, landing page=lead capture page, leads=prospects, chhal=how much/how many, wach=is/are, ana=I, nta=you, dyali=mine/my, dyal=of/for.
+  return `You are an expert luxury web developer specializing in high-converting websites for Moroccan architecture firms. The user described what they want verbally in ${langLabel}.
 
-STRICT RULES: NO emojis — use SVG icons and ★/✓ symbols. Use exact image URLs provided.
+IMPORTANT LANGUAGE NOTES:
+- If Darija/Arabic: understand mixed Arabic-French-Darija instructions
+  Common Darija: bghit=I want, dir/diri=make, zwin=beautiful, professional=احترافي, landing page=صفحة هبوط, leads=عملاء محتملين, lmohandis=the architect, khdm=work on, bla=without, m3a=with, hsen=better, kbir=big, sghir=small, raki=you are, bghina=we want
+- Extract the full intent even from imperfect speech recognition
 
-Extract their intent and generate a complete, fully-styled, self-contained HTML portfolio website for a Moroccan architecture firm. Dark design (#0A0A0A, #E8A838 gold), Inter from Google Fonts, fully responsive. Include: fixed navbar, hero (100vh) using background-image https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80 with dark overlay, about, services with SVG icons, portfolio grid using these images: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80 / https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80 / https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80 / https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80, testimonials with ★ stars, contact form. Full CSS with all spacing and animations. Return ONLY complete HTML starting with <!DOCTYPE html>. No markdown. No backticks.`
+STRICT RULES:
+- NO emojis anywhere — SVG icons only
+- Use exact Unsplash image URLs provided below (images.unsplash.com only)
+- All CSS embedded in <style> tags, all JS in <script> tags before </body>
+
+GENERATE a COMPLETE, self-contained HTML page with:
+- Premium dark design (#0A0A0A background, #E8A838 gold accents, Inter font from Google Fonts)
+- Fully mobile responsive
+- High-converting structure if landing page requested; professional portfolio if website requested
+- Fixed navbar, hero (100vh) with background-image + dark overlay, about/services sections, portfolio grid, testimonials, contact form
+- Hero background: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+- Portfolio images (use as <img> tags, object-fit:cover):
+  https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
+- WhatsApp float button (fixed bottom-right, #25D366, pulse animation)
+- Intersection Observer scroll animations
+- Form submission to architect's API endpoint if a form is needed
+- Smooth scroll, hover effects, mobile hamburger menu
+
+Return ONLY complete HTML starting with <!DOCTYPE html>. No markdown. No backticks. No explanations.`
+}
 
 // ─── POST /api/sites/generate — call Anthropic Claude ────────────────────────
 router.post('/generate', auth, async (req, res) => {
-  const { prompt, voice, type } = req.body
+  const { prompt, voice, type, voiceLang } = req.body
   if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt requis' })
 
   // Guard: API key must be configured
@@ -247,9 +277,9 @@ router.post('/generate', auth, async (req, res) => {
     return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
   }
 
-  // Select system prompt: voice → Darija-aware, landing → conversion-focused, else vitrine
+  // Select system prompt: voice → dynamic lang-aware, landing → conversion, else vitrine
   let systemPrompt
-  if (voice === true) systemPrompt = SYSTEM_PROMPT_VOICE
+  if (voice === true) systemPrompt = buildVoicePrompt(voiceLang || 'ar')
   else if (type === 'landing') systemPrompt = SYSTEM_PROMPT_LANDING
   else systemPrompt = SYSTEM_PROMPT_VITRINE
   // Try claude-sonnet-4-5 first, fall back to claude-opus-4-5

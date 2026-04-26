@@ -21,7 +21,12 @@ const PALETTES = [
 ]
 
 const DEVICE_WIDTHS = { desktop: '100%', tablet: '768px', mobile: '375px' }
-const VOICE_LANGS   = ['ar', 'fr-FR', 'en-US']
+
+const VOICE_LANG_OPTIONS = [
+  { lang: 'ar',    label: 'الدارجة', hint: 'Darija'   },
+  { lang: 'fr-FR', label: 'Français', hint: 'Français' },
+  { lang: 'en-US', label: 'English',  hint: 'English'  },
+]
 
 const MODIFY_CHIPS = [
   'Rends le hero plus accrocheur',
@@ -86,64 +91,84 @@ function withEditorScript(html) {
 }
 
 function buildVitrinePrompt(d) {
-  return `Generate a premium, conversion-optimized Site Vitrine for ${d.name}, a professional architect based in ${d.cities?.join(', ') || 'Casablanca'}, Morocco.
+  const city = d.cities?.[0] || 'Casablanca'
+  const types = d.projectTypes?.join(', ') || 'architecture résidentielle, commerciale'
+  return `Create a luxury, high-converting portfolio website for ${d.name}, a professional architect based in ${city}, Morocco. Specializations: ${types}. Portfolio: ${d.clientsCount} completed projects.
 
-Brand Identity:
-- Architect name: ${d.name}
-- Specializations: ${d.projectTypes?.join(', ') || 'residential architecture'}
-- Cities served: ${d.cities?.join(', ') || 'Casablanca'}
-- Portfolio: ${d.clientsCount} completed projects
-- API endpoint for leads: POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
+DESIGN: Ultra-premium dark aesthetic (#0A0A0A background, #E8A838 gold accents, Inter font). Every section must feel like a luxury brand — think Zaha Hadid Architects meets Moroccan elegance.
 
-Design Requirements:
-- Style: Luxury architectural firm aesthetic
-- Color scheme: Dark (#0A0A0A) background with gold (#E8A838) accents
-- Typography: Inter for body, elegant serif for headings
-- Layout: Full-width sections, generous whitespace, premium feel
-- Mobile: Fully responsive, touch-optimized
+REQUIRED SECTIONS:
+1. Fixed navbar with blur backdrop, gold border, smooth mobile hamburger
+2. Hero: Full viewport, luxury background image overlay, architect name large, specialty in gold, dual CTA buttons, animated scroll indicator
+3. Trust bar: 4 animated counter stats (${d.clientsCount} projects, years of experience, clients, cities)
+4. About: Two-column, professional bio, credentials badges (Diplômé, Agréé, Assuré)
+5. Services: 6 cards with custom SVG icons, gold hover effects, based on ${types}
+6. Portfolio: 6-image grid with hover overlays, real Unsplash architecture photos
+7. Testimonials: 3 cards, Moroccan client names, gold star ratings
+8. Process: 4-step timeline showing how architect works
+9. Contact: Two-column, styled form, contact info with icons
+10. Footer: Dark, professional
 
-Include these sections:
-1. Hero: Strong headline showcasing expertise (not just the name)
-2. About: Personal story, philosophy, credentials
-3. Services: Résidentiel, Commercial, Rénovation (based on specializations)
-4. Portfolio: Beautiful grid with Unsplash architecture placeholder images
-5. Testimonials: 2-3 realistic Moroccan client names and quotes
-6. Contact: Form that POSTs JSON to https://app.archicrm.ma/api/leads/external with X-API-Key header
-
-Quality: Premium Moroccan architecture firm website. Make it look like it cost 50,000 DH to build.
-
-Return ONLY complete valid HTML. No markdown, no backticks, no explanations. Start with <!DOCTYPE html>`
+TECHNICAL:
+- NO emojis — SVG icons only
+- Intersection Observer scroll animations (fade-in)
+- Smooth scroll navigation
+- Form submits to: POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
+- WhatsApp float button: wa.me/212600000000 (fixed bottom-right, green #25D366, pulse animation)
+- Portfolio images from Unsplash images.unsplash.com (use exact URLs):
+  https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&h=600&fit=crop&q=80
+  https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=600&fit=crop&q=80
+- Hero background: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+- Fully mobile responsive with hamburger menu
+- CSS custom properties for theming
+- All CSS and JS embedded — zero external dependencies except Google Fonts`
 }
 
 function buildLandingPrompt(d, enabledFields) {
+  const city = d.cities?.[0] || 'Casablanca'
+  const types = d.projectTypes?.join(', ') || 'architecture résidentielle'
   const fieldsList = enabledFields.map(f => {
-    if (f.type === 'select' && f.options?.length) return `- ${f.label} (dropdown: ${f.options.join(', ')})`
-    if (f.type === 'textarea') return `- ${f.label} (long text area)`
-    if (f.type === 'boolean') return `- ${f.label} (yes/no radio buttons)`
-    return `- ${f.label} (${f.type} input)`
+    if (f.type === 'select' && f.options?.length) return `  - ${f.label} (dropdown: ${f.options.join(', ')})`
+    if (f.type === 'textarea') return `  - ${f.label} (textarea)`
+    if (f.type === 'boolean') return `  - ${f.label} (yes/no radio)`
+    return `  - ${f.label} (${f.type})`
   }).join('\n')
 
-  return `You are an expert conversion rate optimizer and web developer specializing in high-converting lead generation pages for Moroccan architecture firms. Generate a complete, self-contained HTML landing page that converts visitors into leads.
+  return `Create a high-converting lead generation landing page for ${d.name}, architect in ${city}, Morocco. Target: Moroccan homeowners and businesses. Specializations: ${types}.
 
-Architect: ${d.name}, based in ${d.cities?.[0] || 'Casablanca'}, specializing in ${d.projectTypes?.join(', ') || 'architecture'}.
-Portfolio: ${d.clientsCount} completed projects.
+CONVERSION GOAL: Get visitor to fill the lead form. Every element must push toward this goal.
 
-The page MUST include:
-1. Hero: Urgent, benefit-focused headline (NOT just the architect's name), strong subheadline, immediate CTA button
-2. Pain points: 3 problems the prospect has without a professional architect
-3. Benefits: 3-4 key benefits of working with this architect
-4. Social proof: 2-3 realistic Moroccan testimonials with avatar photos (https://ui-avatars.com/api/?name=NAME&background=E8A838&color=000&size=80)
-5. Lead capture form with EXACTLY these fields — no more, no less:
+DESIGN: Dark luxury (#0A0A0A), gold CTAs (#E8A838), professional. No emojis — SVG icons and CSS shapes only.
+
+REQUIRED SECTIONS (in order):
+1. Sticky header (appears after 200px scroll): architect name + phone + call button
+2. Hero (100vh): Pain-focused headline (NOT architect name), dark overlay on luxury architecture photo, gold CTA to form, 3 trust points
+3. Social proof bar: 3 large gold stats + Ordre des Architectes badge
+4. Pain points: 4 problem cards (red left border, SVG X icon) — real Moroccan construction problems
+5. Solution steps: 4 numbered steps (01-04) showing the process
+6. Why choose us: 6 feature cards with SVG checkmark icons
+7. Results: 3 stat cards with animated counters
+8. Testimonials: 3 cards with Moroccan names and gold ★★★★★ stars
+9. Urgency banner: Red background, limited availability message
+10. LEAD FORM (main CTA, id="contact-form"): Centered card, gold top border, form fields:
 ${fieldsList}
-6. Trust signals: years of experience, ${d.clientsCount} projects, satisfaction guarantee
-7. Urgency: limited availability this month
-8. Minimal footer
+    Large gold submit button with arrow SVG, trust badges below
+11. FAQ accordion: 4 questions about working with a Moroccan architect
+12. Footer: minimal dark
+13. WhatsApp float button (fixed, green #25D366, bottom-right, pulse)
 
-Design: Mobile-first, dark (#0A0A0A) background, gold (#E8A838) accents, Inter font from Google Fonts.
-Form submission: POST to https://app.archicrm.ma/api/leads/external with header X-API-Key: ${d.apiKey}, send all form fields as JSON.
-On successful submission: hide form, show in gold: 'Merci ! Nous vous contacterons dans les 24h.'
+FORM: Submit to POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
+Show spinner on submit. On success: hide form, show green 'Merci ! Nous vous contactons sous 24h.'
 
-Return ONLY complete valid HTML. No markdown, no backticks, no explanations. Start with <!DOCTYPE html>`
+IMAGES:
+- Hero bg: https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&h=1080&fit=crop&q=80
+- Section bg: https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1920&h=1080&fit=crop&q=80
+
+All CSS and JS embedded. Intersection Observer animations. Smooth scroll. Fully mobile responsive.`
 }
 
 function buildEnabledFields(presetQuestions, customQuestions) {
@@ -420,11 +445,13 @@ export default function Sites() {
   const [modifyPrompt, setModifyPrompt] = useState('')
 
   // Voice
+  const [voiceLang, setVoiceLang]         = useState('ar')
   const [voiceRecording, setVoiceRecording] = useState(false)
   const [voiceTranscriptDisplay, setVoiceTranscriptDisplay] = useState('')
-  const voiceRecRef = useRef(null)
-  const voiceTranscriptRef = useRef('')   // final text accumulator (no stale-closure issue)
-  const voiceManualStopRef = useRef(false) // true when user manually stops, so onend doesn't advance
+  const voiceRecRef       = useRef(null)
+  const voiceTranscriptRef  = useRef('')    // final text accumulator (avoids stale closure)
+  const voiceManualStopRef  = useRef(false) // true when user clicks Stop — prevents onend from advancing
+  const voiceLangRef        = useRef('ar')  // always-current lang for use inside callbacks
 
   // Form builder (landing only)
   const [presetQuestions, setPresetQuestions] = useState(
@@ -471,6 +498,9 @@ export default function Sites() {
     setCustomPrompt(buildLandingPrompt(siteData, fields))
   }, [presetQuestions, customQuestions, siteData, tab])
 
+  // ── Sync voiceLangRef whenever state changes ───────────────────────────────
+  useEffect(() => { voiceLangRef.current = voiceLang }, [voiceLang])
+
   // ── Close edit panel on HTML change ───────────────────────────────────────
   useEffect(() => { setEditPanel(null) }, [html])
 
@@ -502,10 +532,13 @@ export default function Sites() {
   }
 
   // ── Voice ──────────────────────────────────────────────────────────────────
-  const generateFromVoice = useCallback(async (transcript) => {
+  // generateFromVoice: accepts lang as param (avoids stale-closure on voiceLang state)
+  const generateFromVoice = useCallback(async (transcript, lang) => {
     setGenerating(true)
     try {
-      const { data } = await api.post('/api/sites/generate', { prompt: transcript, voice: true, type: tab })
+      const { data } = await api.post('/api/sites/generate', {
+        prompt: transcript, voice: true, type: tab, voiceLang: lang,
+      })
       handleGenerated(data.html || '')
       toast.success('Site généré !')
     } catch (err) {
@@ -513,45 +546,37 @@ export default function Sites() {
     } finally { setGenerating(false) }
   }, [handleGenerated, tab])
 
-  // Stop recording manually → grab accumulated transcript and generate
+  // stopVoice: manual stop → grab transcript + current lang → generate
   const stopVoice = useCallback(() => {
     voiceManualStopRef.current = true
     voiceRecRef.current?.stop()
     setVoiceRecording(false)
-    const t = voiceTranscriptRef.current
+    const t    = voiceTranscriptRef.current
+    const lang = voiceLangRef.current
     voiceTranscriptRef.current = ''
     setVoiceTranscriptDisplay('')
-    if (t.trim()) generateFromVoice(t.trim())
+    if (t.trim()) generateFromVoice(t.trim(), lang)
   }, [generateFromVoice])
 
-  const tryVoiceLang = useCallback((idx, SR) => {
-    if (idx >= VOICE_LANGS.length) { setVoiceRecording(false); return }
-    const rec = new SR()
-    rec.lang = VOICE_LANGS[idx]
-    rec.continuous = true      // keep listening until user manually stops
-    rec.interimResults = true  // show live transcript while speaking
-    voiceRecRef.current = rec
-    let gotResult = false
-    let advanced = false
+  // startVoice: single-language, continuous, manual stop only
+  const startVoice = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) { toast.error('Microphone non supporté par ce navigateur'); return }
 
-    const advance = () => {
-      if (advanced) return
-      advanced = true
-      if (idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
-      else setVoiceRecording(false)
-    }
+    voiceManualStopRef.current = false
+    voiceTranscriptRef.current = ''
+    setVoiceTranscriptDisplay('')
+
+    const rec = new SR()
+    rec.lang          = voiceLangRef.current
+    rec.continuous    = true   // keep listening until user manually stops
+    rec.interimResults = true  // show live transcript
 
     rec.onresult = e => {
-      // Accumulate all final results + show interim
-      let finalText = ''
-      let interimText = ''
+      let finalText = '', interimText = ''
       for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript + ' '
-          gotResult = true
-        } else {
-          interimText += e.results[i][0].transcript
-        }
+        if (e.results[i].isFinal) finalText  += e.results[i][0].transcript + ' '
+        else                       interimText += e.results[i][0].transcript
       }
       voiceTranscriptRef.current = finalText.trim()
       setVoiceTranscriptDisplay((finalText + interimText).trim())
@@ -560,33 +585,21 @@ export default function Sites() {
     rec.onerror = e => {
       if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
         toast.error('Accès au microphone refusé')
-        advanced = true
-        setVoiceRecording(false)
-        return
+      } else if (e.error === 'language-not-supported') {
+        toast.error('Langue non supportée par votre navigateur')
       }
-      // language-not-supported or network error without any result → try next lang
-      if (!gotResult) advance()
+      setVoiceRecording(false)
     }
 
     rec.onend = () => {
-      // If the user manually stopped, generation is handled in stopVoice — don't advance
-      if (voiceManualStopRef.current) return
-      // Otherwise this was an unexpected end (timeout / error already fired) → advance
-      if (!gotResult && !advanced) advance()
+      // Only handle unexpected ends (manual stop is handled in stopVoice)
+      if (!voiceManualStopRef.current) setVoiceRecording(false)
     }
 
-    try { rec.start() } catch { setVoiceRecording(false) }
-  }, [generateFromVoice])
-
-  const startVoice = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { toast.error('Microphone non supporté par ce navigateur'); return }
-    voiceManualStopRef.current = false
-    voiceTranscriptRef.current = ''
-    setVoiceTranscriptDisplay('')
-    setVoiceRecording(true)
-    tryVoiceLang(0, SR)
-  }, [tryVoiceLang])
+    voiceRecRef.current = rec
+    try { rec.start(); setVoiceRecording(true) }
+    catch { toast.error('Impossible de démarrer le microphone'); setVoiceRecording(false) }
+  }, [])
 
   // ── Generate from prompt ───────────────────────────────────────────────────
   const generateFromPrompt = async () => {
@@ -716,76 +729,88 @@ export default function Sites() {
                     0%, 100% { transform: scaleY(0.25); }
                     50%       { transform: scaleY(1); }
                   }
+                  @keyframes recPulse {
+                    0%, 100% { opacity: 1; }
+                    50%       { opacity: 0.4; }
+                  }
                 `}</style>
-                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-5 text-center">
-                  {/* Mic / Stop button */}
+                <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-4 text-center">
+
+                  {/* Language selector buttons */}
+                  <div className="flex gap-1.5 justify-center mb-4">
+                    {VOICE_LANG_OPTIONS.map(({ lang, label }) => (
+                      <button
+                        key={lang}
+                        onClick={() => setVoiceLang(lang)}
+                        disabled={voiceRecording || generating || modifying}
+                        className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all
+                          ${voiceLang === lang
+                            ? 'bg-[#E8A838] border-[#E8A838] text-[#0A0A0A]'
+                            : 'bg-transparent border-gray-200 dark:border-white/[0.12] text-gray-500 dark:text-white/40 hover:border-[#E8A838]/40 hover:text-[#E8A838]'}
+                          disabled:opacity-40 disabled:cursor-not-allowed`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Mic button */}
                   <button
                     onClick={voiceRecording ? stopVoice : startVoice}
                     disabled={generating || modifying}
-                    className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all
+                    className={`w-14 h-14 rounded-full mx-auto flex items-center justify-center transition-all
                       ${voiceRecording
-                        ? 'bg-red-500 shadow-lg shadow-red-500/40 scale-110'
+                        ? 'bg-red-500 shadow-lg shadow-red-500/40 scale-105'
                         : 'bg-[#E8A838] hover:bg-[#d4952a] shadow-lg shadow-[#E8A838]/30 hover:scale-105 active:scale-95'}
                       disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    {voiceRecording
-                      ? <MicOff size={24} className="text-white" />
-                      : <Mic size={24} className="text-[#0A0A0A]" />}
+                    {voiceRecording ? <MicOff size={22} className="text-white" /> : <Mic size={22} className="text-[#0A0A0A]" />}
                   </button>
 
-                  {/* Waveform bars (visible while recording) */}
+                  {/* Recording indicator */}
                   {voiceRecording && (
-                    <div className="flex items-center justify-center gap-[3px] h-7 mt-3">
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <span className="w-2 h-2 rounded-full bg-red-500" style={{ animation: 'recPulse 1s ease-in-out infinite' }} />
+                      <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">Enregistrement…</span>
+                    </div>
+                  )}
+
+                  {/* Waveform bars */}
+                  {voiceRecording && (
+                    <div className="flex items-center justify-center gap-[3px] h-6 mt-2">
                       {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.4, 0.7, 0.9].map((h, i) => (
-                        <div
-                          key={i}
-                          className="w-[3px] rounded-full bg-red-400"
-                          style={{
-                            height: `${h * 24}px`,
-                            animation: 'waveBar 0.7s ease-in-out infinite',
-                            animationDelay: `${i * 70}ms`,
-                          }}
+                        <div key={i} className="w-[3px] rounded-full bg-red-400"
+                          style={{ height: `${h * 22}px`, animation: 'waveBar 0.7s ease-in-out infinite', animationDelay: `${i * 70}ms` }}
                         />
                       ))}
                     </div>
                   )}
 
-                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white mt-3 mb-1">
-                    {voiceRecording ? 'En écoute — parlez maintenant'
+                  {/* Status + lang label */}
+                  <p className="text-[12px] font-semibold text-gray-900 dark:text-white mt-2.5 mb-0.5">
+                    {voiceRecording
+                      ? `Parlez en ${VOICE_LANG_OPTIONS.find(o => o.lang === voiceLang)?.hint}…`
                       : generating ? 'Génération en cours…'
-                      : 'Parlez pour générer'}
+                      : 'Appuyez et parlez'}
                   </p>
 
                   {/* Live transcript */}
                   {voiceRecording && voiceTranscriptDisplay && (
-                    <p className="text-[11px] text-[#E8A838]/80 mt-1.5 px-3 max-h-10 overflow-hidden leading-relaxed italic">
+                    <p className="text-[11px] text-[#E8A838]/80 mt-1 px-3 max-h-10 overflow-hidden leading-relaxed italic">
                       &ldquo;{voiceTranscriptDisplay}&rdquo;
                     </p>
                   )}
 
+                  {/* Stop button */}
                   {voiceRecording ? (
-                    <p className="text-[11px] text-gray-400 dark:text-white/30 mt-1">
-                      {voiceTranscriptDisplay ? 'Continuez à parler, puis cliquez Arrêter' : 'Darija, Français ou Anglais acceptés'}
-                    </p>
-                  ) : (
-                    <p className="text-[11px] text-gray-400 dark:text-white/30">
-                      {generating ? 'Génération en cours…' : 'Parlez en Darija, Français ou Anglais'}
-                    </p>
-                  )}
-
-                  {/* Stop & generate button */}
-                  {voiceRecording && (
-                    <button
-                      onClick={stopVoice}
-                      className="mt-3 flex items-center gap-1.5 mx-auto bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/60 rounded-xl px-4 py-2 text-[12px] font-semibold transition-all"
-                    >
-                      <MicOff size={13} />
-                      Arrêter et générer
+                    <button onClick={stopVoice}
+                      className="mt-3 flex items-center gap-1.5 mx-auto bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/60 rounded-xl px-4 py-1.5 text-[12px] font-semibold transition-all">
+                      <MicOff size={12} /> Arrêt
                     </button>
-                  )}
-
-                  {!voiceRecording && !generating && (
-                    <p className="text-[11px] text-gray-300 dark:text-white/20 mt-3">ou générez avec un prompt détaillé ↓</p>
+                  ) : (
+                    !generating && (
+                      <p className="text-[10px] text-gray-300 dark:text-white/20 mt-2">ou générez avec un prompt détaillé ↓</p>
+                    )
                   )}
                 </div>
 
