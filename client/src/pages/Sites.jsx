@@ -421,7 +421,10 @@ export default function Sites() {
 
   // Voice
   const [voiceRecording, setVoiceRecording] = useState(false)
+  const [voiceTranscriptDisplay, setVoiceTranscriptDisplay] = useState('')
   const voiceRecRef = useRef(null)
+  const voiceTranscriptRef = useRef('')   // final text accumulator (no stale-closure issue)
+  const voiceManualStopRef = useRef(false) // true when user manually stops, so onend doesn't advance
 
   // Form builder (landing only)
   const [presetQuestions, setPresetQuestions] = useState(
@@ -499,11 +502,6 @@ export default function Sites() {
   }
 
   // ── Voice ──────────────────────────────────────────────────────────────────
-  const stopVoice = useCallback(() => {
-    voiceRecRef.current?.stop()
-    setVoiceRecording(false)
-  }, [])
-
   const generateFromVoice = useCallback(async (transcript) => {
     setGenerating(true)
     try {
@@ -515,15 +513,26 @@ export default function Sites() {
     } finally { setGenerating(false) }
   }, [handleGenerated, tab])
 
+  // Stop recording manually → grab accumulated transcript and generate
+  const stopVoice = useCallback(() => {
+    voiceManualStopRef.current = true
+    voiceRecRef.current?.stop()
+    setVoiceRecording(false)
+    const t = voiceTranscriptRef.current
+    voiceTranscriptRef.current = ''
+    setVoiceTranscriptDisplay('')
+    if (t.trim()) generateFromVoice(t.trim())
+  }, [generateFromVoice])
+
   const tryVoiceLang = useCallback((idx, SR) => {
     if (idx >= VOICE_LANGS.length) { setVoiceRecording(false); return }
     const rec = new SR()
     rec.lang = VOICE_LANGS[idx]
-    rec.continuous = false
-    rec.interimResults = false
+    rec.continuous = true      // keep listening until user manually stops
+    rec.interimResults = true  // show live transcript while speaking
     voiceRecRef.current = rec
     let gotResult = false
-    let advanced = false  // prevent double-advance from onerror then onend
+    let advanced = false
 
     const advance = () => {
       if (advanced) return
@@ -533,30 +542,48 @@ export default function Sites() {
     }
 
     rec.onresult = e => {
-      gotResult = true
-      const text = Array.from(e.results).map(r => r[0].transcript).join(' ')
-      setVoiceRecording(false)
-      generateFromVoice(text)
+      // Accumulate all final results + show interim
+      let finalText = ''
+      let interimText = ''
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript + ' '
+          gotResult = true
+        } else {
+          interimText += e.results[i][0].transcript
+        }
+      }
+      voiceTranscriptRef.current = finalText.trim()
+      setVoiceTranscriptDisplay((finalText + interimText).trim())
     }
+
     rec.onerror = e => {
       if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
         toast.error('Accès au microphone refusé')
-        advanced = true  // block onend from advancing
+        advanced = true
         setVoiceRecording(false)
         return
       }
-      // language-not-supported, network, or any other error → try next language
+      // language-not-supported or network error without any result → try next lang
       if (!gotResult) advance()
     }
+
     rec.onend = () => {
-      if (!gotResult) advance()
+      // If the user manually stopped, generation is handled in stopVoice — don't advance
+      if (voiceManualStopRef.current) return
+      // Otherwise this was an unexpected end (timeout / error already fired) → advance
+      if (!gotResult && !advanced) advance()
     }
+
     try { rec.start() } catch { setVoiceRecording(false) }
   }, [generateFromVoice])
 
   const startVoice = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) { toast.error('Microphone non supporté par ce navigateur'); return }
+    voiceManualStopRef.current = false
+    voiceTranscriptRef.current = ''
+    setVoiceTranscriptDisplay('')
     setVoiceRecording(true)
     tryVoiceLang(0, SR)
   }, [tryVoiceLang])
@@ -684,13 +711,20 @@ export default function Sites() {
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
 
                 {/* ── SECTION 1: Voice generation ─────────────────────────── */}
+                <style>{`
+                  @keyframes waveBar {
+                    0%, 100% { transform: scaleY(0.25); }
+                    50%       { transform: scaleY(1); }
+                  }
+                `}</style>
                 <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/[0.08] rounded-2xl p-5 text-center">
+                  {/* Mic / Stop button */}
                   <button
                     onClick={voiceRecording ? stopVoice : startVoice}
                     disabled={generating || modifying}
-                    className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3 transition-all
+                    className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all
                       ${voiceRecording
-                        ? 'bg-red-500 shadow-lg shadow-red-500/40 animate-pulse scale-110'
+                        ? 'bg-red-500 shadow-lg shadow-red-500/40 scale-110'
                         : 'bg-[#E8A838] hover:bg-[#d4952a] shadow-lg shadow-[#E8A838]/30 hover:scale-105 active:scale-95'}
                       disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -699,16 +733,57 @@ export default function Sites() {
                       : <Mic size={24} className="text-[#0A0A0A]" />}
                   </button>
 
-                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white mb-1">
-                    {voiceRecording ? 'Écoute en cours…'
+                  {/* Waveform bars (visible while recording) */}
+                  {voiceRecording && (
+                    <div className="flex items-center justify-center gap-[3px] h-7 mt-3">
+                      {[0.4, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.4, 0.7, 0.9].map((h, i) => (
+                        <div
+                          key={i}
+                          className="w-[3px] rounded-full bg-red-400"
+                          style={{
+                            height: `${h * 24}px`,
+                            animation: 'waveBar 0.7s ease-in-out infinite',
+                            animationDelay: `${i * 70}ms`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-[13px] font-semibold text-gray-900 dark:text-white mt-3 mb-1">
+                    {voiceRecording ? 'En écoute — parlez maintenant'
                       : generating ? 'Génération en cours…'
                       : 'Parlez pour générer'}
                   </p>
-                  <p className="text-[11px] text-gray-400 dark:text-white/30">
-                    {voiceRecording
-                      ? 'Parlez maintenant, le site sera généré automatiquement'
-                      : 'Parlez en Darija, Français ou Anglais'}
-                  </p>
+
+                  {/* Live transcript */}
+                  {voiceRecording && voiceTranscriptDisplay && (
+                    <p className="text-[11px] text-[#E8A838]/80 mt-1.5 px-3 max-h-10 overflow-hidden leading-relaxed italic">
+                      &ldquo;{voiceTranscriptDisplay}&rdquo;
+                    </p>
+                  )}
+
+                  {voiceRecording ? (
+                    <p className="text-[11px] text-gray-400 dark:text-white/30 mt-1">
+                      {voiceTranscriptDisplay ? 'Continuez à parler, puis cliquez Arrêter' : 'Darija, Français ou Anglais acceptés'}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-gray-400 dark:text-white/30">
+                      {generating ? 'Génération en cours…' : 'Parlez en Darija, Français ou Anglais'}
+                    </p>
+                  )}
+
+                  {/* Stop & generate button */}
+                  {voiceRecording && (
+                    <button
+                      onClick={stopVoice}
+                      className="mt-3 flex items-center gap-1.5 mx-auto bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/60 rounded-xl px-4 py-2 text-[12px] font-semibold transition-all"
+                    >
+                      <MicOff size={13} />
+                      Arrêter et générer
+                    </button>
+                  )}
+
                   {!voiceRecording && !generating && (
                     <p className="text-[11px] text-gray-300 dark:text-white/20 mt-3">ou générez avec un prompt détaillé ↓</p>
                   )}
