@@ -1005,7 +1005,7 @@ export default function Sites() {
               <div className="flex-1 bg-gray-100 dark:bg-[#0a0a0a] rounded-2xl overflow-hidden flex items-start justify-center relative">
 
                 {/* Empty state */}
-                {!html && !generating && !voiceRecording && (
+                {!html && !generating && !isRecording && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                     <div className="w-16 h-16 rounded-2xl bg-[#E8A838]/10 flex items-center justify-center mb-4">
                       <Mic size={28} className="text-[#E8A838]" />
@@ -1019,7 +1019,7 @@ export default function Sites() {
                 )}
 
                 {/* Voice recording state overlay */}
-                {voiceRecording && !html && (
+                {isRecording && !html && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl">
                     <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center animate-pulse mb-4">
                       <Mic size={32} className="text-red-400" />
