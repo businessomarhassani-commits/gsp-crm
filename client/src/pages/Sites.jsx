@@ -21,7 +21,7 @@ const PALETTES = [
 ]
 
 const DEVICE_WIDTHS = { desktop: '100%', tablet: '768px', mobile: '375px' }
-const VOICE_LANGS   = ['ar-MA', 'fr-FR', 'en-US']
+const VOICE_LANGS   = ['ar', 'fr-FR', 'en-US']
 
 const MODIFY_CHIPS = [
   'Rends le hero plus accrocheur',
@@ -507,13 +507,13 @@ export default function Sites() {
   const generateFromVoice = useCallback(async (transcript) => {
     setGenerating(true)
     try {
-      const { data } = await api.post('/api/sites/generate', { prompt: transcript, voice: true })
+      const { data } = await api.post('/api/sites/generate', { prompt: transcript, voice: true, type: tab })
       handleGenerated(data.html || '')
       toast.success('Site généré !')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur lors de la génération')
     } finally { setGenerating(false) }
-  }, [handleGenerated])
+  }, [handleGenerated, tab])
 
   const tryVoiceLang = useCallback((idx, SR) => {
     if (idx >= VOICE_LANGS.length) { setVoiceRecording(false); return }
@@ -523,6 +523,14 @@ export default function Sites() {
     rec.interimResults = false
     voiceRecRef.current = rec
     let gotResult = false
+    let advanced = false  // prevent double-advance from onerror then onend
+
+    const advance = () => {
+      if (advanced) return
+      advanced = true
+      if (idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
+      else setVoiceRecording(false)
+    }
 
     rec.onresult = e => {
       gotResult = true
@@ -533,15 +541,15 @@ export default function Sites() {
     rec.onerror = e => {
       if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
         toast.error('Accès au microphone refusé')
+        advanced = true  // block onend from advancing
         setVoiceRecording(false)
         return
       }
-      if (!gotResult && idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
-      else setVoiceRecording(false)
+      // language-not-supported, network, or any other error → try next language
+      if (!gotResult) advance()
     }
     rec.onend = () => {
-      if (!gotResult && idx + 1 < VOICE_LANGS.length) tryVoiceLang(idx + 1, SR)
-      else if (!gotResult) setVoiceRecording(false)
+      if (!gotResult) advance()
     }
     try { rec.start() } catch { setVoiceRecording(false) }
   }, [generateFromVoice])
@@ -558,7 +566,7 @@ export default function Sites() {
     if (!customPrompt.trim()) { toast.error('Entrez un prompt'); return }
     setGenerating(true)
     try {
-      const { data } = await api.post('/api/sites/generate', { prompt: customPrompt })
+      const { data } = await api.post('/api/sites/generate', { prompt: customPrompt, type: tab })
       handleGenerated(data.html || '')
       toast.success('Site généré !')
     } catch (err) {

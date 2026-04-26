@@ -62,14 +62,88 @@ router.get('/my-data', auth, async (req, res) => {
   }
 })
 
-// System prompts
-const SYSTEM_PROMPT_DEFAULT = `You are an expert web developer specializing in beautiful, conversion-optimized websites for Moroccan architecture firms. Generate complete, self-contained HTML files with embedded CSS and JavaScript. Use modern design: dark elegant style with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. All text in French unless the prompt specifies otherwise. Make it look premium and professional. Return ONLY the complete HTML code, nothing else, no explanations, no markdown. Start with <!DOCTYPE html>`
+// ─── System prompts ───────────────────────────────────────────────────────────
+const SYSTEM_PROMPT_VITRINE = `You are an expert web developer. Generate a COMPLETE, fully-styled, self-contained HTML portfolio website for a Moroccan architect. Premium design.
 
-const SYSTEM_PROMPT_VOICE = `You are an expert web developer. The user spoke in Moroccan Darija, French, or Arabic describing what they want on their website. Extract their intent and generate a complete, professional, self-contained HTML website for a Moroccan architecture firm. Use dark elegant design with gold accents (#E8A838), Inter font from Google Fonts, fully mobile responsive. No external dependencies except Google Fonts. Include: hero section, about, services, portfolio, and contact form. Return ONLY the complete HTML, nothing else. Start with <!DOCTYPE html>`
+DESIGN: Dark #0A0A0A background, gold #E8A838 accents, Inter font from Google Fonts (import in <head>), fully responsive with media queries. Use CSS custom properties: --gold: #E8A838; --dark: #0A0A0A; --card: #111111;
+
+SECTIONS:
+1. NAV: Fixed navbar, logo left (architect name in gold), links right (Accueil, A Propos, Services, Portfolio, Contact), gold CTA button 'Nous Contacter'
+2. HERO: Full viewport height (100vh), architect name large, specialty and city, two CTAs (primary gold + secondary outline), animated scroll indicator, subtle gold gradient overlay
+3. ABOUT: Two columns - text left (bio, philosophy, experience, diplomas), stats right (projects count, years, cities) with large gold numbers
+4. SERVICES: 3-4 service cards with SVG icons, title, description. Dark cards (#111) with gold left border
+5. PORTFOLIO: 6-card grid with images from Unsplash (https://source.unsplash.com/600x400/?architecture,morocco&sig=N where N=1..6), hover overlay showing project name
+6. TESTIMONIALS: 3 cards with Moroccan client names, avatars (https://ui-avatars.com/api/?name=NAME&background=E8A838&color=000&size=80), 5 gold stars, quote, city
+7. CONTACT: Two columns - form left (name, phone, email, project type dropdown, message, gold submit), contact info right
+8. FOOTER: Dark minimal, architect name + tagline, copyright
+
+CSS: Buttons border-radius 8px, padding 14px 28px, font-weight 600, transition 0.3s. Cards border-radius 12px, padding 24px. Sections 80px 20px desktop, 48px 16px mobile. Max-width 1200px centered. Smooth scroll. Fade-in animations via Intersection Observer.
+
+Return ONLY complete HTML starting with <!DOCTYPE html>. No markdown. No backticks.`
+
+const SYSTEM_PROMPT_LANDING = `You are an expert web developer and conversion rate optimizer. Generate a COMPLETE, fully-styled, self-contained HTML landing page for a Moroccan architecture firm. The page must look premium and professional with full CSS included.
+
+DESIGN REQUIREMENTS:
+- Dark background: #0A0A0A
+- Gold accent color: #E8A838
+- Font: Inter from Google Fonts (import in <head>)
+- All sections have proper padding, margins, and spacing
+- Mobile responsive with media queries
+- Smooth scroll, hover effects on buttons and cards
+- Fade-in animations via Intersection Observer
+- CSS custom properties: --gold: #E8A838; --dark: #0A0A0A; --card: #111111;
+
+MANDATORY SECTIONS:
+
+1. HERO (100vh):
+- Dark background with subtle gold gradient overlay
+- Badge: 'ARCHITECTE AGREE MAROC' with gold border
+- H1: Pain-focused headline in French
+- Subheadline: benefit statement
+- Two CTAs: primary gold 'Demander un devis gratuit' + secondary outline 'Voir nos realisations'
+- Trust bar: 3 stats with large gold numbers
+
+2. PROBLEMS (dark cards):
+- Title: 'Vous reconnaissez-vous dans ces situations ?'
+- 4 problem cards with red X icons, dark card #111, subtle red border
+
+3. SOLUTION:
+- Title: 'La Solution Professionnelle'
+- 4 step cards with gold numbers 01-04, icon + title + description, gold left border
+
+4. WHY US:
+- Title: 'Pourquoi Nous Choisir ?'
+- 6 feature cards in 3-col grid, gold checkmarks
+
+5. TESTIMONIALS (3 cards):
+- Moroccan names, avatars (https://ui-avatars.com/api/?name=NAME&background=E8A838&color=000&size=80)
+- 5 gold stars, quote, city
+
+6. LEAD CAPTURE FORM (most important):
+- Dark card with gold border, max-width 600px centered
+- Title: 'Obtenez Votre Consultation Gratuite'
+- Subtitle: 'Repondez a ces questions et nous vous contactons sous 24h'
+- Use EXACTLY the form fields listed in the user's prompt
+- Full-width gold submit button 'Envoyer ma demande'
+- Trust text: 'Gratuit | Sans engagement | Reponse sous 24h'
+- On submit: POST JSON to API URL in prompt with X-API-Key header
+- On success: hide form, show green: 'Merci ! Nous vous contactons dans les 24h.'
+
+7. FOOTER: Dark minimal, architect name, copyright
+
+CSS: Buttons border-radius 8px, padding 14px 28px, font-weight 600, transition 0.3s. Cards border-radius 12px, padding 24px. Sections 80px 20px desktop, 48px 16px mobile. Max-width 1200px centered. Form inputs: dark background #1a1a1a, gold border on focus, border-radius 8px, padding 14px.
+
+Return ONLY complete HTML starting with <!DOCTYPE html>. No markdown. No backticks.`
+
+const SYSTEM_PROMPT_VOICE = `You are an expert web developer. The user spoke in Moroccan Darija (Moroccan Arabic dialect mixed with French). Understand their intent fully even if the transcription is imperfect.
+
+Common Darija words: bghit=I want, dir=make/do, zwin=beautiful, kbir=big, sghir=small, lmohandis=the architect, landing page=lead capture page, leads=prospects, chhal=how much/how many, wach=is/are, ana=I, nta=you, dyali=mine/my, dyal=of/for.
+
+Extract their intent and generate a complete, professional, fully-styled, self-contained HTML website for a Moroccan architecture firm. Use dark elegant design (#0A0A0A background, #E8A838 gold accents), Inter font from Google Fonts, fully mobile responsive. Include: fixed navbar, hero (100vh), about, services, portfolio with images, testimonials, contact form. Full CSS with proper styling — cards, spacing, animations. Return ONLY the complete HTML starting with <!DOCTYPE html>. No markdown. No backticks.`
 
 // ─── POST /api/sites/generate — call Anthropic Claude ────────────────────────
 router.post('/generate', auth, async (req, res) => {
-  const { prompt, voice } = req.body
+  const { prompt, voice, type } = req.body
   if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt requis' })
 
   // Guard: API key must be configured
@@ -88,7 +162,11 @@ router.post('/generate', auth, async (req, res) => {
     return res.status(500).json({ error: 'Erreur d\'initialisation du SDK Anthropic.' })
   }
 
-  const systemPrompt = voice === true ? SYSTEM_PROMPT_VOICE : SYSTEM_PROMPT_DEFAULT
+  // Select system prompt: voice → Darija-aware, landing → conversion-focused, else vitrine
+  let systemPrompt
+  if (voice === true) systemPrompt = SYSTEM_PROMPT_VOICE
+  else if (type === 'landing') systemPrompt = SYSTEM_PROMPT_LANDING
+  else systemPrompt = SYSTEM_PROMPT_VITRINE
   // Try claude-sonnet-4-5 first, fall back to claude-opus-4-5
   const MODELS = ['claude-sonnet-4-5', 'claude-opus-4-5']
   let lastErr = null
