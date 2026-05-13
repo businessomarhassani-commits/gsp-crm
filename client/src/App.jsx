@@ -31,9 +31,9 @@ import LandingPage from './pages/LandingPage'
 // ── Detect which app to render based on hostname ─────────────────────────────
 function getAppMode() {
   const h = window.location.hostname
-  if (h === 'admin.archicrm.ma' || h.startsWith('admin.')) return 'admin'
-  if (h === 'archicrm.ma' || h === 'www.archicrm.ma') return 'landing'
-  if (h === 'app.archicrm.ma') return 'crm'
+  if (h === 'admin.archicrm.ma' || h === 'admin.crm.archi') return 'admin'
+  if (h === 'archicrm.ma' || h === 'www.archicrm.ma' || h === 'crm.archi' || h === 'www.crm.archi') return 'landing'
+  if (h === 'app.archicrm.ma' || h === 'app.crm.archi') return 'crm'
   // localhost / dev — default to CRM so developers can work on it
   return 'crm'
 }

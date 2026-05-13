@@ -34,18 +34,20 @@ app.use(express.json({
 }))
 
 // ── Wildcard subdomain routing — MUST be before all API routes ────────────────
-// Handles {slug}.archicrm.ma → serves architect site HTML from Supabase
+// Handles {slug}.crm.archi and {slug}.archicrm.ma → serves architect site HTML from Supabase
 app.use(async (req, res, next) => {
   const host = req.headers.host || ''
 
-  // Only act on *.archicrm.ma requests
-  const match = host.match(/^([^.]+)\.archicrm\.ma(?::\d+)?$/)
+  // Match *.crm.archi or *.archicrm.ma
+  const matchNew = host.match(/^([^.]+)\.crm\.archi(?::\d+)?$/)
+  const matchOld = host.match(/^([^.]+)\.archicrm\.ma(?::\d+)?$/)
+  const match = matchNew || matchOld
   if (!match) return next()
 
   const subdomain = match[1]
 
   // Skip reserved subdomains — let them fall through to normal routing
-  const reserved = ['www', 'app', 'admin', 'api', 'archicrm', '']
+  const reserved = ['www', 'app', 'admin', 'api', 'archicrm', 'crm', '']
   if (reserved.includes(subdomain)) return next()
 
   // /landing path → landing page type; everything else → vitrine
@@ -105,7 +107,7 @@ app.use(async (req, res, next) => {
 <body>
   <h1>Site non trouvé</h1>
   <p>Ce site n'existe pas encore ou n'a pas encore été publié.</p>
-  <a href="https://archicrm.ma">← Retour à ArchiCRM</a>
+  <a href="https://crm.archi">← Retour à ArchiCRM</a>
 </body>
 </html>`)
   } catch (err) {

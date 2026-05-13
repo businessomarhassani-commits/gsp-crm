@@ -373,7 +373,7 @@ router.post('/publish', auth, async (req, res) => {
     )
     if (error) throw error
 
-    res.json({ url: `https://${slug}.archicrm.ma`, slug })
+    res.json({ url: `https://${slug}.crm.archi`, slug })
   } catch (err) {
     console.error('sites/publish error:', err)
     res.status(500).json({ error: 'Erreur lors de la publication' })

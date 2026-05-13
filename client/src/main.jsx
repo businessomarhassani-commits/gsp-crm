@@ -8,10 +8,12 @@ import './index.css'
 
 // ── Architect subdomain detection ─────────────────────────────────────────────
 // Must run BEFORE React mounts. If the current hostname is a published architect
-// site (e.g. aziz-hassani.archicrm.ma), fetch its HTML and replace the document.
+// site (e.g. aziz-hassani.crm.archi), fetch its HTML and replace the document.
 const RESERVED = [
   'archicrm.ma', 'www.archicrm.ma',
   'app.archicrm.ma', 'admin.archicrm.ma',
+  'crm.archi', 'www.crm.archi',
+  'app.crm.archi', 'admin.crm.archi',
   'localhost',
 ]
 
@@ -37,19 +39,21 @@ const NOT_FOUND_HTML = `<!DOCTYPE html>
 <body>
   <h1>Site non trouvé</h1>
   <p>Ce site n'existe pas encore ou n'a pas encore été publié.</p>
-  <a href="https://archicrm.ma">← Retour à ArchiCRM</a>
+  <a href="https://crm.archi">← Retour à ArchiCRM</a>
 </body>
 </html>`
 
 const hostname = window.location.hostname
 const isArchitectSite =
   !RESERVED.includes(hostname) &&
-  hostname.endsWith('.archicrm.ma') &&
+  (hostname.endsWith('.archicrm.ma') || hostname.endsWith('.crm.archi')) &&
   hostname.split('.').length === 3  // exactly one subdomain level
 
 if (isArchitectSite) {
   // Extract slug and requested type from URL
-  const slug = hostname.replace('.archicrm.ma', '')
+  const slug = hostname.endsWith('.crm.archi')
+    ? hostname.replace('.crm.archi', '')
+    : hostname.replace('.archicrm.ma', '')
   const type = window.location.pathname === '/landing' ? 'landing' : 'vitrine'
 
   // Show a minimal loading screen immediately (before the fetch resolves)

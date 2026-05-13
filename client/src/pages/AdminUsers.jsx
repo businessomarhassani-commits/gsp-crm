@@ -101,7 +101,11 @@ export default function AdminUsers() {
     try {
       const { data } = await api.post(`/api/admin/impersonate/${user.id}`)
       // Open CRM app on the app subdomain (or same host in local dev)
-      const crmBase = window.location.hostname === 'admin.archicrm.ma' ? 'https://app.archicrm.ma' : ''
+      const crmBase = window.location.hostname === 'admin.crm.archi'
+        ? 'https://app.crm.archi'
+        : window.location.hostname === 'admin.archicrm.ma'
+        ? 'https://app.archicrm.ma'
+        : ''
       window.open(`${crmBase}/?impersonate=${encodeURIComponent(data.token)}`, '_blank')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur impersonation')

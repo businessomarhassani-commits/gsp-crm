@@ -11,7 +11,7 @@ import {
   financeImg, rappelsImg, clientsImg,
 } from '../assets/screenshotImages'
 
-const APP_URL = 'https://app.archicrm.ma'
+const APP_URL = 'https://app.crm.archi'
 
 // ─── Scroll-fade hook ─────────────────────────────────────────────────────────
 function useFadeIn() {
@@ -313,7 +313,7 @@ export default function LandingPage() {
                 <span className="w-3 h-3 rounded-full bg-yellow-500/50" />
                 <span className="w-3 h-3 rounded-full bg-green-500/50" />
                 <div className="ml-2 flex-1 bg-white/[0.05] rounded-md h-5 flex items-center px-3">
-                  <span className="text-white/20 text-[11px]">app.archicrm.ma</span>
+                  <span className="text-white/20 text-[11px]">app.crm.archi</span>
                 </div>
                 {/* Live badge */}
                 <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
@@ -666,7 +666,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 justify-center sm:justify-end">
               <Link to="/terms"   className="text-white/30 hover:text-white/60 text-[13px] transition-colors">Mentions légales</Link>
               <Link to="/privacy" className="text-white/30 hover:text-white/60 text-[13px] transition-colors">Confidentialité</Link>
-              <a href="mailto:contact@archicrm.ma" className="text-white/30 hover:text-white/60 text-[13px] transition-colors">Contact</a>
+              <a href="mailto:contact@crm.archi" className="text-white/30 hover:text-white/60 text-[13px] transition-colors">Contact</a>
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-white/[0.05] text-center">

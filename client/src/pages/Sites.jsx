@@ -113,7 +113,7 @@ TECHNICAL:
 - NO emojis — SVG icons only
 - Intersection Observer scroll animations (fade-in)
 - Smooth scroll navigation
-- Form submits to: POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
+- Form submits to: POST https://app.crm.archi/api/leads/external with X-API-Key: ${d.apiKey}
 - WhatsApp float button: wa.me/212600000000 (fixed bottom-right, green #25D366, pulse animation)
 - Portfolio images from Unsplash images.unsplash.com (use exact URLs):
   https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80
@@ -161,7 +161,7 @@ ${fieldsList}
 12. Footer: minimal dark
 13. WhatsApp float button (fixed, green #25D366, bottom-right, pulse)
 
-FORM: Submit to POST https://app.archicrm.ma/api/leads/external with X-API-Key: ${d.apiKey}
+FORM: Submit to POST https://app.crm.archi/api/leads/external with X-API-Key: ${d.apiKey}
 Show spinner on submit. On success: hide form, show green 'Merci ! Nous vous contactons sous 24h.'
 
 IMAGES:
@@ -399,7 +399,7 @@ function SettingsTab({ published }) {
               {type === 'vitrine' ? 'Site Vitrine' : 'Landing Page'}
             </h3>
             {pub
-              ? <div className="flex items-center gap-2 mb-4 text-green-500 text-[12px]"><CheckCircle size={14} /><span>Publié sur <a href={`https://${pub.slug}.archicrm.ma`} target="_blank" rel="noopener noreferrer" className="underline">{pub.slug}.archicrm.ma</a></span></div>
+              ? <div className="flex items-center gap-2 mb-4 text-green-500 text-[12px]"><CheckCircle size={14} /><span>Publié sur <a href={`https://${pub.slug}.crm.archi`} target="_blank" rel="noopener noreferrer" className="underline">{pub.slug}.crm.archi</a></span></div>
               : <p className="text-gray-400 dark:text-white/30 text-[12px] mb-4">Pas encore publié.</p>
             }
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -942,7 +942,7 @@ export default function Sites() {
                 <div className="bg-[#0A0A0A] rounded-xl px-4 py-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-semibold text-white truncate">
-                      <span className="text-[#E8A838]">{slug}</span>.archicrm.ma
+                      <span className="text-[#E8A838]">{slug}</span>.crm.archi
                     </p>
                     {publishedAt && (
                       <p className="text-white/30 text-[10px] mt-0.5">
