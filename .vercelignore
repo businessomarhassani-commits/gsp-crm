@@ -1,0 +1,9 @@
+node_modules/
+client/node_modules/
+client/dist/
+desktop-app/node_modules/
+desktop-app/dist/
+desktop-app/assets/
+.env
+.env.local
+*.env
