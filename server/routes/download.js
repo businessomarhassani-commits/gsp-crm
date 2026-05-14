@@ -22,7 +22,7 @@ const supabase = require('../db')
 // ── GitHub releases base URL ──────────────────────────────────────────────────
 // Update these when new versions are released
 const RELEASES = {
-  windows: 'https://github.com/businessomarhassani-commits/gsp-crm/releases/download/v1.0.0/ArchiCRM-Anas-Setup.exe',
+  windows: 'https://github.com/businessomarhassani-commits/gsp-crm/releases/download/v1.0.1/ArchiCRM-Setup.exe',
   mac:     null, // Not built yet — mark as unavailable
 }
 

@@ -1,17 +1,18 @@
 {
   "name": "archicrm-desktop",
-  "version": "1.0.0",
-  "description": "ArchiCRM Desktop — offline-first pour Anas",
+  "version": "1.0.1",
+  "description": "ArchiCRM Desktop — offline-first",
   "main": "main.js",
   "author": "ArchiCRM <contact@crm.archi>",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "start": "electron .",
+    "dev": "electron .",
     "generate-icon": "node scripts/generate-icon.js",
     "rebuild-sqlite": "npx @electron/rebuild -f -w better-sqlite3",
     "build:react": "cd ../client && npm run build",
-    "build": "npm run generate-icon && npm run rebuild-sqlite && npm run build:react && electron-builder --win --x64",
+    "build": "npm run rebuild-sqlite && npm run build:react && electron-builder --win --x64",
     "build:fast": "electron-builder --win --x64"
   },
   "devDependencies": {
@@ -23,14 +24,18 @@
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^9.4.3",
-    "sharp": "^0.33.4"
+    "sharp": "^0.33.4",
+    "ws": "^8.20.1"
   },
   "build": {
     "appId": "ma.crm.archicrm.desktop",
     "productName": "ArchiCRM",
     "copyright": "Copyright © 2025 ArchiCRM",
     "asar": true,
-    "asarUnpack": ["**/*.node", "**/sharp/build/**/*"],
+    "asarUnpack": [
+      "**/*.node",
+      "**/sharp/build/**/*"
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "assets"
@@ -51,12 +56,25 @@
       "!node_modules/@electron/rebuild/**/*"
     ],
     "extraResources": [
-      { "from": "../client/dist", "to": "client/dist", "filter": ["**/*"] }
+      {
+        "from": "../client/dist",
+        "to": "client/dist",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "assets/icon.ico",
-      "artifactName": "ArchiCRM-Anas-Setup.exe"
+      "artifactName": "ArchiCRM-Setup.exe"
     },
     "nsis": {
       "oneClick": true,

@@ -250,19 +250,22 @@ export default function DownloadPage() {
                 Télécharger .dmg
               </a>
             ) : (
-              <button
-                disabled
-                className="flex items-center justify-center gap-2.5 bg-white/[0.04] text-white/20 font-bold text-[14px] py-3.5 rounded-xl cursor-not-allowed mt-auto border border-white/[0.06]"
+              <a
+                href="mailto:hassaniomar759@gmail.com?subject=Demande%20version%20Mac%20ArchiCRM"
+                className="flex items-center justify-center gap-2.5 bg-white/[0.05] hover:bg-white/[0.09] text-white/35 hover:text-white/55 font-bold text-[14px] py-3.5 rounded-xl transition-colors mt-auto border border-white/[0.08]"
               >
                 <Download size={17} />
-                Télécharger .dmg
-              </button>
+                Demander la version Mac
+              </a>
             )}
-            <p className="text-white/20 text-[11px] text-center mt-3">
-              {macAvailable
-                ? 'Ouvrez le .dmg et glissez ArchiCRM dans Applications'
-                : 'La version Mac est en cours de développement'}
-            </p>
+            <div className="text-center mt-3 space-y-1">
+              <p className="text-white text-[12px] font-medium">
+                {macAvailable ? 'Ouvrez le .dmg et glissez ArchiCRM dans Applications' : 'Version Mac disponible sur demande'}
+              </p>
+              <p className="text-white/30 text-[11px]">
+                {macAvailable ? '' : 'Contactez-nous pour obtenir la version Mac'}
+              </p>
+            </div>
           </div>
 
         </div>

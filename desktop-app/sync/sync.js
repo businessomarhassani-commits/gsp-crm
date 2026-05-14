@@ -4,6 +4,8 @@
  * Strategy: last-write-wins using updated_at timestamp.
  */
 const { createClient } = require('@supabase/supabase-js')
+// ws is required for Supabase realtime in Electron (Node.js < 22 has no native WebSocket)
+const ws = require('ws')
 
 const SUPABASE_URL = 'https://gzdlaugncthmartempcg.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6ZGxhdWduY3RobWFydGVtcGNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNDIxNzgsImV4cCI6MjA5MDkxODE3OH0.rxpQpksuZY8CCJB6s-bLFV2_tVSj5ALePvHA70NxRrY'
@@ -21,7 +23,15 @@ let pendingCount = 0
 function init(database, win) {
   db = database
   mainWindow = win
-  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+      realtime: { transport: ws }  // use ws package — required for Node.js < 22
+    })
+  } catch (err) {
+    console.warn('[sync] Supabase init failed (offline mode):', err.message)
+    supabase = null
+  }
 }
 
 function getPendingCount() {

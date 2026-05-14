@@ -61,6 +61,9 @@ function closeSplash() {
   if (splashWindow && !splashWindow.isDestroyed()) { splashWindow.close(); splashWindow = null }
 }
 
+// ── Dev / prod detection ──────────────────────────────────────────────────────
+const isDev = !app.isPackaged
+
 // ── Client dist path ──────────────────────────────────────────────────────────
 function getClientDist() {
   return app.isPackaged
@@ -82,7 +85,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      webSecurity: false // needed for file:// protocol
+      webSecurity: false // allow file:// relative assets
     }
   })
 
@@ -94,9 +97,21 @@ function createWindow() {
   mainWindow.on('maximize', () => saveWinBounds(mainWindow))
   mainWindow.on('unmaximize', () => saveWinBounds(mainWindow))
 
-  // Load built React app
-  const indexPath = path.join(getClientDist(), 'index.html')
-  mainWindow.loadFile(indexPath)
+  // Load the React app ─────────────────────────────────────────────────────────
+  // In dev: use Vite dev server if running (hot reload); fall back to built dist.
+  // In prod (packaged): always use the bundled dist from extraResources.
+  if (isDev) {
+    // Try Vite dev server first; fall back to built dist
+    mainWindow.loadURL('http://localhost:5173').catch(() => {
+      const indexPath = path.join(getClientDist(), 'index.html')
+      console.log('[main] Vite not running, loading built dist:', indexPath)
+      mainWindow.loadFile(indexPath)
+    })
+  } else {
+    const indexPath = path.join(getClientDist(), 'index.html')
+    console.log('[main] Loading packaged dist:', indexPath)
+    mainWindow.loadFile(indexPath)
+  }
 
   // External links open in browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -104,15 +119,37 @@ function createWindow() {
     return { action: 'deny' }
   })
 
-  // Show after load; close splash
+  // Show window after content loads; close splash
   mainWindow.webContents.on('did-finish-load', () => {
     closeSplash()
     mainWindow.show()
+    if (isDev) mainWindow.webContents.openDevTools()
   })
-  mainWindow.webContents.on('did-fail-load', () => {
+
+  // On load failure: show a styled error page so we know exactly what went wrong
+  mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+    console.error('[main] did-fail-load:', code, description, url)
     closeSplash()
+    mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+      <!DOCTYPE html>
+      <html>
+      <head><style>
+        body{background:#0A0A0A;color:#fff;font-family:sans-serif;display:flex;
+             align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:12px}
+        h1{color:#E8A838;font-size:1.4rem}
+        pre{background:#111;border:1px solid #333;padding:16px;border-radius:8px;font-size:12px;color:#aaa;max-width:600px;word-break:break-all}
+        p{color:#666;font-size:13px}
+      </style></head>
+      <body>
+        <h1>⚠ Impossible de charger ArchiCRM</h1>
+        <pre>Erreur : ${description}\nCode : ${code}\nURL : ${url}</pre>
+        <p>Vérifiez que client/dist/index.html existe et relancez l'application.</p>
+      </body>
+      </html>
+    `)}`)
     mainWindow.show()
   })
+
   mainWindow.on('closed', () => { mainWindow = null })
 
   buildMenu()
