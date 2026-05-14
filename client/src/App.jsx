@@ -27,6 +27,7 @@ import Sites from './pages/Sites'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import LandingPage from './pages/LandingPage'
+import DownloadPage from './pages/DownloadPage'
 
 // ── Detect which app to render based on hostname ─────────────────────────────
 function getAppMode() {
@@ -56,8 +57,9 @@ function LandingAppRoutes() {
       <Route path="/"        element={<LandingPage />} />
       <Route path="/login"   element={<Login />} />
       <Route path="/signup"  element={<Signup />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms"   element={<Terms />} />
+      <Route path="/privacy"  element={<Privacy />} />
+      <Route path="/terms"    element={<Terms />} />
+      <Route path="/download" element={<DownloadPage />} />
       {/* Legacy /landing path still works */}
       <Route path="/landing" element={<Navigate to="/" replace />} />
       <Route path="*"        element={<Navigate to="/" replace />} />
@@ -116,8 +118,9 @@ function CRMAppRoutes() {
       <Route path="/sites"       element={<CRMRoute adminOnly><Sites /></CRMRoute>} />
 
       {/* Public pages also available inside CRM subdomain */}
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms"   element={<Terms />} />
+      <Route path="/privacy"  element={<Privacy />} />
+      <Route path="/terms"    element={<Terms />} />
+      <Route path="/download" element={<DownloadPage />} />
 
       {/* Catch-all */}
       <Route path="*"

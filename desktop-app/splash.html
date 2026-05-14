@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ArchiCRM</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0A0A0A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+      gap: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Subtle radial glow behind logo */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(232,168,56,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: fadeUp .5s ease both;
+    }
+
+    .logo-wrap svg {
+      width: 52px;
+      height: 52px;
+      filter: drop-shadow(0 0 12px rgba(232,168,56,.45));
+    }
+
+    .logo-text {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+    .logo-text .w { color: #ffffff; }
+    .logo-text .g { color: #E8A838; }
+
+    .tagline {
+      color: #444;
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 500;
+      animation: fadeUp .5s .1s ease both;
+    }
+
+    /* Spinner */
+    .spinner-wrap {
+      animation: fadeUp .5s .2s ease both;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2.5px solid rgba(232,168,56,.15);
+      border-top-color: #E8A838;
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto;
+    }
+
+    .loading-text {
+      color: #3a3a3a;
+      font-size: 12px;
+      letter-spacing: .12em;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Version badge bottom */
+    .version {
+      position: fixed;
+      bottom: 20px;
+      color: #222;
+      font-size: 11px;
+      letter-spacing: .06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-wrap">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="16,4 30,26 2,26" fill="#E8A838" opacity="0.35"/>
+      <polygon points="16,8 28,28 4,28" fill="#E8A838"/>
+    </svg>
+    <div class="logo-text">
+      <span class="w">Archi</span><span class="g">CRM</span>
+    </div>
+  </div>
+
+  <p class="tagline">Votre CRM d'architecture</p>
+
+  <div class="spinner-wrap">
+    <div class="spinner"></div>
+    <p class="loading-text">Chargement…</p>
+  </div>
+
+  <span class="version">v1.0.0</span>
+</body>
+</html>
