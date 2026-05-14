@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import Logo from '../components/Logo'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Monitor, Download } from 'lucide-react'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -76,7 +76,43 @@ export default function Login() {
           </p>
         </div>
 
-        <p className="text-center text-white/[0.12] text-[11px] mt-6">
+        {/* ── Desktop download section ── */}
+        <div className="mt-4 relative flex items-center gap-3">
+          <div className="flex-1 h-px bg-white/[0.07]" />
+          <span className="text-white/20 text-[11px] font-medium">ou</span>
+          <div className="flex-1 h-px bg-white/[0.07]" />
+        </div>
+
+        <div className="mt-3 bg-[#111] border border-[#E8A838]/25 rounded-xl p-4">
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <Monitor size={15} className="text-[#E8A838] flex-shrink-0" />
+            <span className="text-white text-[13px] font-semibold">Utiliser ArchiCRM hors ligne</span>
+          </div>
+          <p className="text-white/35 text-[11.5px] mb-3 leading-relaxed">
+            Téléchargez l'application de bureau pour travailler sans internet
+          </p>
+          <div className="flex gap-2">
+            <Link
+              to="/download#windows"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#E8A838]/10 hover:bg-[#E8A838]/20 border border-[#E8A838]/30 text-[#E8A838] text-[11.5px] font-semibold py-2 rounded-lg transition-colors"
+            >
+              <Download size={11} />
+              Windows .exe
+            </Link>
+            <Link
+              to="/download#mac"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-white/40 hover:text-white/60 text-[11.5px] font-medium py-2 rounded-lg transition-colors"
+            >
+              <Download size={11} />
+              Mac .dmg
+            </Link>
+          </div>
+          <p className="text-white/15 text-[10.5px] text-center mt-2.5">
+            Version 1.0.0 · Données locales + sync cloud
+          </p>
+        </div>
+
+        <p className="text-center text-white/[0.12] text-[11px] mt-5">
           <Link to="/privacy" className="hover:text-white/30 transition-colors">Confidentialité</Link>
           {' · '}
           <Link to="/terms" className="hover:text-white/30 transition-colors">CGU</Link>
