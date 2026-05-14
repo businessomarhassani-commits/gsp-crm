@@ -1,7 +1,7 @@
 {
-  "name": "archicrm",
+  "name": "archicrm-desktop",
   "version": "1.0.0",
-  "description": "ArchiCRM — CRM professionnel pour architectes marocains",
+  "description": "ArchiCRM Desktop — offline-first pour Anas",
   "main": "main.js",
   "author": "ArchiCRM <contact@crm.archi>",
   "license": "UNLICENSED",
@@ -9,20 +9,28 @@
   "scripts": {
     "start": "electron .",
     "generate-icon": "node scripts/generate-icon.js",
-    "build": "npm run generate-icon && electron-builder --win --x64",
-    "build:dir": "npm run generate-icon && electron-builder --win --x64 --dir"
+    "rebuild-sqlite": "npx @electron/rebuild -f -w better-sqlite3",
+    "build:react": "cd ../client && npm run build",
+    "build": "npm run generate-icon && npm run rebuild-sqlite && npm run build:react && electron-builder --win --x64",
+    "build:fast": "electron-builder --win --x64"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
     "electron": "^28.3.3",
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
     "sharp": "^0.33.4"
   },
   "build": {
-    "appId": "ma.crm.archicrm",
+    "appId": "ma.crm.archicrm.desktop",
     "productName": "ArchiCRM",
     "copyright": "Copyright © 2025 ArchiCRM",
+    "asar": true,
+    "asarUnpack": ["**/*.node", "**/sharp/build/**/*"],
     "directories": {
       "output": "dist",
       "buildResources": "assets"
@@ -31,23 +39,24 @@
       "main.js",
       "preload.js",
       "splash.html",
-      "assets/**/*",
-      "!assets/icon.svg",
-      "!node_modules/sharp/**/*",
-      "node_modules/sharp/build/Release/**/*",
-      "node_modules/sharp/lib/**/*",
-      "node_modules/sharp/package.json"
+      "db/**/*.js",
+      "sync/**/*.js",
+      "assets/icon.ico",
+      "assets/icon.png",
+      "node_modules/**/*",
+      "!node_modules/sharp/src/**/*",
+      "!node_modules/.cache/**/*",
+      "!node_modules/electron/**/*",
+      "!node_modules/electron-builder/**/*",
+      "!node_modules/@electron/rebuild/**/*"
     ],
-    "extraResources": [],
+    "extraResources": [
+      { "from": "../client/dist", "to": "client/dist", "filter": ["**/*"] }
+    ],
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        }
-      ],
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "assets/icon.ico",
-      "artifactName": "ArchiCRM-Setup-${version}.exe"
+      "artifactName": "ArchiCRM-Anas-Setup.exe"
     },
     "nsis": {
       "oneClick": true,
@@ -57,9 +66,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "ArchiCRM",
       "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "installerHeaderIcon": "assets/icon.ico",
-      "deleteAppDataOnUninstall": false
+      "uninstallerIcon": "assets/icon.ico"
     },
     "publish": null
   }

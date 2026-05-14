@@ -28,6 +28,7 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import LandingPage from './pages/LandingPage'
 import DownloadPage from './pages/DownloadPage'
+import DesktopSetup from './pages/DesktopSetup'
 
 // ── Detect which app to render based on hostname ─────────────────────────────
 function getAppMode() {
@@ -169,6 +170,16 @@ function AdminAppRoutes() {
 // ────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const mode = getAppMode()
+
+  // ── Electron offline-first: show setup wizard on first launch ────────────
+  const isDesktop = typeof window !== 'undefined' && !!window.db
+  if (isDesktop) {
+    const setupDone = localStorage.getItem('archicrm_setup_done')
+    const hasToken  = !!localStorage.getItem('archicrm_token')
+    if (!setupDone && !hasToken) {
+      return <DesktopSetup />
+    }
+  }
 
   return (
     <ThemeProvider>

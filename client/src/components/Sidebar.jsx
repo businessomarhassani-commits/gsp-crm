@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import Logo from './Logo'
+import SyncStatus from './SyncStatus'
 import {
   LayoutDashboard,
   Target,
@@ -107,6 +108,9 @@ export default function Sidebar({ isOpen, onClose }) {
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           {theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
         </button>
+
+        {/* Sync status — desktop only */}
+        <SyncStatus />
 
         {/* Logout */}
         <button

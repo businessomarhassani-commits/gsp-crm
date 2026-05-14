@@ -1,10 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
+
+// In Electron the app is loaded via file:// — HashRouter is needed so React
+// Router can navigate without hitting the filesystem for each route.
+const isElectron = typeof window !== 'undefined' && !!window.db
+const Router = isElectron ? HashRouter : BrowserRouter
 
 // ── Architect subdomain detection ─────────────────────────────────────────────
 // Must run BEFORE React mounts. If the current hostname is a published architect
@@ -106,7 +111,7 @@ if (isArchitectSite) {
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <BrowserRouter>
+        <Router>
           <App />
           <Toaster
             position="top-right"
@@ -116,7 +121,7 @@ if (isArchitectSite) {
               success: { iconTheme: { primary: '#E8A838', secondary: '#1a2332' } }
             }}
           />
-        </BrowserRouter>
+        </Router>
       </ErrorBoundary>
     </React.StrictMode>
   )
