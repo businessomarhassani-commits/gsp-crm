@@ -23,7 +23,7 @@ const supabase = require('../db')
 // Update these when new versions are released
 const RELEASES = {
   windows: 'https://github.com/businessomarhassani-commits/gsp-crm/releases/download/v1.0.1/ArchiCRM-Setup.exe',
-  mac:     null, // Not built yet — mark as unavailable
+  mac:     'https://github.com/businessomarhassani-commits/gsp-crm/releases/download/v1.0.1/ArchiCRM-Setup.dmg',
 }
 
 // ── Helper: track download in Supabase ───────────────────────────────────────

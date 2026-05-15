@@ -101,14 +101,14 @@ export default function Login() {
             </Link>
             <Link
               to="/download#mac"
-              className="flex-1 flex items-center justify-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-white/40 hover:text-white/60 text-[11.5px] font-medium py-2 rounded-lg transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#E8A838]/10 hover:bg-[#E8A838]/20 border border-[#E8A838]/30 text-[#E8A838] text-[11.5px] font-semibold py-2 rounded-lg transition-colors"
             >
               <Download size={11} />
               Mac .dmg
             </Link>
           </div>
           <p className="text-white/15 text-[10.5px] text-center mt-2.5">
-            Version 1.0.0 · Données locales + sync cloud
+            Version 1.0.1 · Windows + Mac · Données locales + sync cloud
           </p>
         </div>
 

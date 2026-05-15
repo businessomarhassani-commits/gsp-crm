@@ -3,8 +3,9 @@ import { Link, useLocation } from 'react-router-dom'
 import { Download, Check, X, ChevronDown, ChevronUp, ArrowLeft, Wifi, HardDrive, Usb } from 'lucide-react'
 import Logo from '../components/Logo'
 
-const VERSION = '1.0.0'
+const VERSION = '1.0.1'
 const WIN_SIZE = '83 MB'
+const MAC_SIZE = '170 MB'
 
 // ── Windows SVG icon ─────────────────────────────────────────────────────────
 function WindowsIcon({ size = 40 }) {
@@ -95,8 +96,7 @@ export default function DownloadPage() {
     }
   }, [location.hash])
 
-  // Mac is not yet built (Windows-only build machine)
-  const macAvailable = false
+  const macAvailable = true
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-[Inter,sans-serif]">
@@ -211,61 +211,38 @@ export default function DownloadPage() {
           </div>
 
           {/* Mac card */}
-          <div id="mac" className="bg-[#111] border border-white/[0.07] rounded-2xl p-7 flex flex-col scroll-mt-24 relative overflow-hidden">
-            {!macAvailable && (
-              <div className="absolute top-3.5 right-3.5">
-                <span className="bg-white/[0.08] text-white/35 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-white/[0.08]">
-                  Bientôt disponible
-                </span>
-              </div>
-            )}
-
+          <div id="mac" className="bg-[#111] border-2 border-[#E8A838]/35 rounded-2xl p-7 flex flex-col scroll-mt-24 relative overflow-hidden">
             <div className="flex items-center gap-4 mb-5">
               <AppleIcon size={52} />
               <div>
-                <h3 className={`font-bold text-[17px] ${macAvailable ? 'text-white' : 'text-white/40'}`}>
+                <h3 className="font-bold text-[17px] text-white">
                   ArchiCRM pour Mac
                 </h3>
-                <p className="text-white/25 text-[12px] mt-0.5">macOS 11+ (Intel + Apple Silicon)</p>
+                <p className="text-white/35 text-[12px] mt-0.5">macOS 11+ · Intel + Apple Silicon (M1/M2/M3)</p>
               </div>
             </div>
 
             <div className="flex gap-5 mb-6">
               <div>
-                <p className="text-white/15 text-[10px] uppercase tracking-wider mb-0.5">Taille</p>
-                <p className="text-white/30 text-[13px] font-semibold">TBD</p>
+                <p className="text-white/25 text-[10px] uppercase tracking-wider mb-0.5">Taille</p>
+                <p className="text-white/70 text-[13px] font-semibold">{MAC_SIZE}</p>
               </div>
               <div>
-                <p className="text-white/15 text-[10px] uppercase tracking-wider mb-0.5">Version</p>
-                <p className="text-white/30 text-[13px] font-semibold">v{VERSION}</p>
+                <p className="text-white/25 text-[10px] uppercase tracking-wider mb-0.5">Version</p>
+                <p className="text-white/70 text-[13px] font-semibold">v{VERSION}</p>
               </div>
             </div>
 
-            {macAvailable ? (
-              <a
-                href="/api/download/mac"
-                className="flex items-center justify-center gap-2.5 bg-[#E8A838] hover:bg-[#d49730] text-[#0A0A0A] font-bold text-[14px] py-3.5 rounded-xl transition-all hover:scale-[1.02] mt-auto"
-              >
-                <Download size={17} />
-                Télécharger .dmg
-              </a>
-            ) : (
-              <a
-                href="mailto:hassaniomar759@gmail.com?subject=Demande%20version%20Mac%20ArchiCRM"
-                className="flex items-center justify-center gap-2.5 bg-white/[0.05] hover:bg-white/[0.09] text-white/35 hover:text-white/55 font-bold text-[14px] py-3.5 rounded-xl transition-colors mt-auto border border-white/[0.08]"
-              >
-                <Download size={17} />
-                Demander la version Mac
-              </a>
-            )}
-            <div className="text-center mt-3 space-y-1">
-              <p className="text-white text-[12px] font-medium">
-                {macAvailable ? 'Ouvrez le .dmg et glissez ArchiCRM dans Applications' : 'Version Mac disponible sur demande'}
-              </p>
-              <p className="text-white/30 text-[11px]">
-                {macAvailable ? '' : 'Contactez-nous pour obtenir la version Mac'}
-              </p>
-            </div>
+            <a
+              href="/api/download/mac"
+              className="flex items-center justify-center gap-2.5 bg-[#E8A838] hover:bg-[#d49730] text-[#0A0A0A] font-bold text-[14px] py-3.5 rounded-xl transition-all hover:scale-[1.02] shadow-lg shadow-[#E8A838]/15 mt-auto"
+            >
+              <Download size={17} />
+              Télécharger .dmg
+            </a>
+            <p className="text-white/25 text-[11px] text-center mt-3">
+              Ouvrez le .dmg et glissez ArchiCRM dans Applications
+            </p>
           </div>
 
         </div>
