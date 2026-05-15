@@ -39,25 +39,57 @@ jobs:
       - name: Verify built index.html uses relative paths
         run: grep 'src="\./' client/dist/index.html && echo "✓ Relative paths OK" || echo "⚠ Check base setting"
 
-      # ── 4. Create .icns icon from .png using macOS built-in tools ──────────
+      # ── 4. Create .icns icon using Python + Pillow (reliable PNG→ICNS) ─────
       - name: Create .icns icon
         run: |
           ICON_SRC="desktop-app/assets/icon.png"
           ICONSET_DIR="ArchiCRM.iconset"
-          mkdir -p "$ICONSET_DIR"
 
-          # sips can upscale; fine for a vector-style logo icon
-          sips -z 16   16   "$ICON_SRC" --out "$ICONSET_DIR/icon_16x16.png"      2>/dev/null
-          sips -z 32   32   "$ICON_SRC" --out "$ICONSET_DIR/icon_16x16@2x.png"   2>/dev/null
-          sips -z 32   32   "$ICON_SRC" --out "$ICONSET_DIR/icon_32x32.png"      2>/dev/null
-          sips -z 64   64   "$ICON_SRC" --out "$ICONSET_DIR/icon_32x32@2x.png"   2>/dev/null
-          sips -z 128  128  "$ICON_SRC" --out "$ICONSET_DIR/icon_128x128.png"    2>/dev/null
-          sips -z 256  256  "$ICON_SRC" --out "$ICONSET_DIR/icon_128x128@2x.png" 2>/dev/null
-          sips -z 256  256  "$ICON_SRC" --out "$ICONSET_DIR/icon_256x256.png"    2>/dev/null
-          sips -z 512  512  "$ICON_SRC" --out "$ICONSET_DIR/icon_256x256@2x.png" 2>/dev/null
-          sips -z 512  512  "$ICON_SRC" --out "$ICONSET_DIR/icon_512x512.png"    2>/dev/null
-          sips -z 1024 1024 "$ICON_SRC" --out "$ICONSET_DIR/icon_512x512@2x.png" 2>/dev/null
+          echo "→ Source icon:"
+          ls -lah "$ICON_SRC"
+          file "$ICON_SRC"
 
+          # Install Pillow for reliable image resizing (sips can produce bad PNGs)
+          pip3 install Pillow --quiet --break-system-packages 2>/dev/null || pip3 install Pillow --quiet
+
+          # Generate all required iconset sizes using Python
+          python3 - << 'PYEOF'
+          import os, sys
+          from PIL import Image
+
+          src = 'desktop-app/assets/icon.png'
+          iconset = 'ArchiCRM.iconset'
+          os.makedirs(iconset, exist_ok=True)
+
+          img = Image.open(src).convert('RGBA')
+          print(f'Source image: {img.size[0]}x{img.size[1]} {img.mode}')
+
+          sizes = [
+              (16,   'icon_16x16.png'),
+              (32,   'icon_16x16@2x.png'),
+              (32,   'icon_32x32.png'),
+              (64,   'icon_32x32@2x.png'),
+              (128,  'icon_128x128.png'),
+              (256,  'icon_128x128@2x.png'),
+              (256,  'icon_256x256.png'),
+              (512,  'icon_256x256@2x.png'),
+              (512,  'icon_512x512.png'),
+              (1024, 'icon_512x512@2x.png'),
+          ]
+
+          for size, name in sizes:
+              resized = img.resize((size, size), Image.LANCZOS)
+              out_path = f'{iconset}/{name}'
+              resized.save(out_path, 'PNG')
+              print(f'  ✓ {name} ({size}x{size})')
+
+          print('All iconset sizes created.')
+          PYEOF
+
+          echo "→ Iconset contents:"
+          ls -lah "$ICONSET_DIR/"
+
+          # Convert iconset to .icns
           iconutil -c icns "$ICONSET_DIR" -o desktop-app/assets/icon.icns
           echo "✓ Created icon.icns ($(du -h desktop-app/assets/icon.icns | cut -f1))"
           ls -la desktop-app/assets/
