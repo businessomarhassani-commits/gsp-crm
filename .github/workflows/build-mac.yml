@@ -1,0 +1,106 @@
+name: Build Mac DMG
+
+# Trigger manually from the Actions tab
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'GitHub release tag to upload to (e.g. v1.0.1)'
+        required: true
+        default: 'v1.0.1'
+
+permissions:
+  contents: write   # needed to upload assets to releases
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ─────────────────────────────────────────────────────────
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # ── 3. Build React client (with base: './' for Electron) ───────────────
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Build React client
+        run: npm run build
+        working-directory: client
+
+      - name: Verify built index.html uses relative paths
+        run: grep 'src="\./' client/dist/index.html && echo "✓ Relative paths OK" || echo "⚠ Check base setting"
+
+      # ── 4. Create .icns icon from .png using macOS built-in tools ──────────
+      - name: Create .icns icon
+        run: |
+          ICON_SRC="desktop-app/assets/icon.png"
+          ICONSET_DIR="ArchiCRM.iconset"
+          mkdir -p "$ICONSET_DIR"
+
+          # sips can upscale; fine for a vector-style logo icon
+          sips -z 16   16   "$ICON_SRC" --out "$ICONSET_DIR/icon_16x16.png"      2>/dev/null
+          sips -z 32   32   "$ICON_SRC" --out "$ICONSET_DIR/icon_16x16@2x.png"   2>/dev/null
+          sips -z 32   32   "$ICON_SRC" --out "$ICONSET_DIR/icon_32x32.png"      2>/dev/null
+          sips -z 64   64   "$ICON_SRC" --out "$ICONSET_DIR/icon_32x32@2x.png"   2>/dev/null
+          sips -z 128  128  "$ICON_SRC" --out "$ICONSET_DIR/icon_128x128.png"    2>/dev/null
+          sips -z 256  256  "$ICON_SRC" --out "$ICONSET_DIR/icon_128x128@2x.png" 2>/dev/null
+          sips -z 256  256  "$ICON_SRC" --out "$ICONSET_DIR/icon_256x256.png"    2>/dev/null
+          sips -z 512  512  "$ICON_SRC" --out "$ICONSET_DIR/icon_256x256@2x.png" 2>/dev/null
+          sips -z 512  512  "$ICON_SRC" --out "$ICONSET_DIR/icon_512x512.png"    2>/dev/null
+          sips -z 1024 1024 "$ICON_SRC" --out "$ICONSET_DIR/icon_512x512@2x.png" 2>/dev/null
+
+          iconutil -c icns "$ICONSET_DIR" -o desktop-app/assets/icon.icns
+          echo "✓ Created icon.icns ($(du -h desktop-app/assets/icon.icns | cut -f1))"
+          ls -la desktop-app/assets/
+
+      # ── 5. Install desktop-app dependencies ────────────────────────────────
+      # Use --ignore-scripts to skip native compilation during npm install.
+      # electron-builder will handle native rebuilds (better-sqlite3) itself.
+      - name: Install desktop-app dependencies
+        run: npm install --ignore-scripts
+        working-directory: desktop-app
+
+      # ── 6. Build Mac DMG (Universal: Intel + Apple Silicon) ────────────────
+      - name: Build Mac DMG
+        run: npx electron-builder --mac --universal
+        working-directory: desktop-app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false   # skip code signing (no certificate)
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 7. List output files ───────────────────────────────────────────────
+      - name: List build output
+        run: |
+          echo "=== desktop-app/dist/ ==="
+          ls -lah desktop-app/dist/ || echo "No dist directory"
+          echo ""
+          echo "=== .dmg files ==="
+          find desktop-app/dist -name "*.dmg" -exec ls -lah {} \; 2>/dev/null || echo "No .dmg files found"
+
+      # ── 8. Upload DMG to existing GitHub Release ───────────────────────────
+      - name: Upload DMG to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          files: desktop-app/dist/ArchiCRM-Setup.dmg
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 9. Summary ─────────────────────────────────────────────────────────
+      - name: Build summary
+        run: |
+          SIZE=$(du -h desktop-app/dist/ArchiCRM-Setup.dmg 2>/dev/null | cut -f1 || echo "unknown")
+          echo "✅ ArchiCRM-Setup.dmg built successfully"
+          echo "   Size: $SIZE"
+          echo "   Tag:  ${{ github.event.inputs.release_tag }}"
+          echo "   URL:  https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag }}/ArchiCRM-Setup.dmg"
