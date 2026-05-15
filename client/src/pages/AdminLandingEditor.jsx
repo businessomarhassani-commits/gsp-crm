@@ -52,6 +52,7 @@ function flatToStructured(flat) {
       badge_text: get('pricing', 'badge_text'),
       cta_text: get('pricing', 'cta_text'),
       features: tryParseJSON(get('pricing', 'features'), []),
+      tiers: tryParseJSON(get('pricing', 'tiers'), []),
     },
     testimonials,
     faq,
@@ -73,7 +74,8 @@ function structuredToFlat(structured) {
   })
   const pf = structured.pricing || {}
   Object.entries(pf).forEach(([k, v]) => {
-    flat[`pricing|${k}`] = k === 'features' ? JSON.stringify(v) : String(v ?? '')
+    const jsonFields = ['features', 'tiers']
+    flat[`pricing|${k}`] = jsonFields.includes(k) ? JSON.stringify(v) : String(v ?? '')
   })
   ;(structured.testimonials || []).forEach((t, i) => {
     flat[`testimonials|testimonial_${i}_name`] = t.name ?? ''
@@ -237,7 +239,81 @@ export default function AdminLandingEditor() {
     })
   }
 
-  // ── Pricing features list helpers ─────────────────────────────────────────
+  // ── Pricing tiers helpers ─────────────────────────────────────────────────
+  const DEFAULT_TIERS = [
+    {
+      name: 'Starter', price: '490', currency: 'DH', featured: false,
+      features: [
+        { text: 'CRM complet', included: true },
+        { text: "Jusqu'à 100 leads", included: true },
+        { text: 'Pipeline kanban', included: true },
+        { text: 'Rappels', included: true },
+        { text: 'Site web IA', included: false },
+        { text: 'Meta Ads', included: false },
+        { text: 'App desktop', included: false },
+      ],
+    },
+    {
+      name: 'Pro', price: '890', currency: 'DH', featured: true, badge: 'Le plus populaire',
+      features: [
+        { text: 'CRM complet', included: true },
+        { text: 'Leads illimités', included: true },
+        { text: 'Pipeline kanban', included: true },
+        { text: 'Rappels', included: true },
+        { text: 'Site web IA (1 site)', included: true },
+        { text: 'Meta Ads', included: true },
+        { text: 'App desktop', included: false },
+      ],
+    },
+    {
+      name: 'Premium', price: '1490', currency: 'DH', featured: false,
+      features: [
+        { text: 'CRM complet', included: true },
+        { text: 'Leads illimités', included: true },
+        { text: 'Pipeline kanban', included: true },
+        { text: 'Rappels', included: true },
+        { text: 'Sites web IA (3 sites)', included: true },
+        { text: 'Meta Ads', included: true },
+        { text: 'App desktop', included: true },
+      ],
+    },
+  ]
+
+  function getPricingTiers() {
+    return tryParseJSON(get('pricing', 'tiers'), DEFAULT_TIERS)
+  }
+
+  function setPricingTiers(tiers) {
+    set('pricing', 'tiers', JSON.stringify(tiers))
+  }
+
+  function updateTier(index, field, value) {
+    const tiers = getPricingTiers()
+    tiers[index] = { ...tiers[index], [field]: value }
+    setPricingTiers(tiers)
+  }
+
+  function updateTierFeature(tierIndex, featIndex, field, value) {
+    const tiers = getPricingTiers()
+    const features = [...tiers[tierIndex].features]
+    features[featIndex] = { ...features[featIndex], [field]: value }
+    tiers[tierIndex] = { ...tiers[tierIndex], features }
+    setPricingTiers(tiers)
+  }
+
+  function addTierFeature(tierIndex) {
+    const tiers = getPricingTiers()
+    tiers[tierIndex].features = [...tiers[tierIndex].features, { text: '', included: true }]
+    setPricingTiers(tiers)
+  }
+
+  function removeTierFeature(tierIndex, featIndex) {
+    const tiers = getPricingTiers()
+    tiers[tierIndex].features = tiers[tierIndex].features.filter((_, i) => i !== featIndex)
+    setPricingTiers(tiers)
+  }
+
+  // Legacy single-plan helpers (kept for backward compat with AI editor)
   function getPricingFeatures() {
     return tryParseJSON(get('pricing', 'features'), [])
   }
@@ -345,7 +421,7 @@ export default function AdminLandingEditor() {
   const featureCount = getFeatureCount()
   const faqCount = getFaqCount()
   const testimonialCount = getTestimonialCount()
-  const pricingFeatures = getPricingFeatures()
+  const pricingTiers = getPricingTiers()
 
   return (
     <div className="space-y-6 max-w-4xl pb-24">
@@ -444,50 +520,93 @@ export default function AdminLandingEditor() {
           </AccordionCard>
 
           {/* PRICING */}
-          <AccordionCard title="💰 Tarifs" onSave={() => saveSection('pricing')} saving={saving === 'pricing'}>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Nom du plan"
-                value={get('pricing', 'plan_name')} saved={getSaved('pricing', 'plan_name')}
-                onChange={v => set('pricing', 'plan_name', v)} />
-              <Field label="Prix"
-                value={get('pricing', 'price')} saved={getSaved('pricing', 'price')}
-                onChange={v => set('pricing', 'price', v)} />
-              <Field label="Devise"
-                value={get('pricing', 'currency')} saved={getSaved('pricing', 'currency')}
-                onChange={v => set('pricing', 'currency', v)} />
-              <Field label="Badge (ex: Populaire)"
-                value={get('pricing', 'badge_text')} saved={getSaved('pricing', 'badge_text')}
-                onChange={v => set('pricing', 'badge_text', v)} />
-            </div>
-            <Field label="Texte CTA"
-              value={get('pricing', 'cta_text')} saved={getSaved('pricing', 'cta_text')}
-              onChange={v => set('pricing', 'cta_text', v)} />
-            <div>
-              <label className={labelCls}>Liste des features incluses</label>
-              <div className="space-y-2">
-                {pricingFeatures.map((feat, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input type="text" className={`${inputCls} flex-1`} value={feat}
-                      onChange={e => {
-                        const arr = [...pricingFeatures]
-                        arr[i] = e.target.value
-                        setPricingFeatures(arr)
-                      }} />
-                    <button onClick={() => {
-                      const arr = [...pricingFeatures]
-                      arr.splice(i, 1)
-                      setPricingFeatures(arr)
-                    }} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shrink-0">
-                      <Trash2 size={13} />
-                    </button>
+          <AccordionCard title="💰 Tarifs (3 formules)" onSave={() => saveSection('pricing')} saving={saving === 'pricing'}>
+            <p className="text-[12px] text-gray-400 dark:text-gray-500 -mt-2 mb-2">
+              Les 3 cartes s'affichent côte à côte sur la page d'accueil. La formule "featured" reçoit la bordure dorée.
+            </p>
+            <div className="space-y-6">
+              {pricingTiers.map((tier, ti) => (
+                <div key={ti} className={`p-4 rounded-xl border space-y-3 ${
+                  tier.featured
+                    ? 'bg-[#E8A838]/5 border-[#E8A838]/30 dark:bg-[#E8A838]/10'
+                    : 'bg-gray-50 dark:bg-white/[0.03] border-gray-100 dark:border-white/5'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-[#E8A838] uppercase tracking-wider">
+                      Formule {ti + 1}{tier.featured ? ' — ★ Mise en avant' : ''}
+                    </p>
                   </div>
-                ))}
-                <button onClick={() => setPricingFeatures([...pricingFeatures, ''])}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 hover:text-[#E8A838] hover:border-[#E8A838]/50 text-[13px] transition-colors">
-                  <Plus size={13} />
-                  Ajouter un item
-                </button>
-              </div>
+
+                  {/* Tier meta fields */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Nom du plan"
+                      value={tier.name}
+                      onChange={v => updateTier(ti, 'name', v)} />
+                    <Field label="Prix (sans devise)"
+                      value={tier.price}
+                      onChange={v => updateTier(ti, 'price', v)} />
+                    <Field label="Devise (ex: DH)"
+                      value={tier.currency}
+                      onChange={v => updateTier(ti, 'currency', v)} />
+                    <Field label="Badge (ex: Le plus populaire)"
+                      value={tier.badge ?? ''}
+                      onChange={v => updateTier(ti, 'badge', v)} />
+                  </div>
+
+                  {/* Featured toggle */}
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <div
+                      onClick={() => updateTier(ti, 'featured', !tier.featured)}
+                      className={`w-9 h-5 rounded-full transition-colors relative ${tier.featured ? 'bg-[#E8A838]' : 'bg-gray-200 dark:bg-white/10'}`}
+                    >
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${tier.featured ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </div>
+                    <span className="text-[12px] text-gray-600 dark:text-gray-400">Mettre en avant (bordure dorée)</span>
+                  </label>
+
+                  {/* Features list */}
+                  <div>
+                    <label className={labelCls}>Fonctionnalités</label>
+                    <div className="space-y-2">
+                      {tier.features.map((feat, fi) => (
+                        <div key={fi} className="flex items-center gap-2">
+                          {/* Included toggle */}
+                          <button
+                            onClick={() => updateTierFeature(ti, fi, 'included', !feat.included)}
+                            className={`w-6 h-6 rounded flex items-center justify-center shrink-0 border transition-colors ${
+                              feat.included
+                                ? 'bg-[#E8A838]/15 border-[#E8A838]/40 text-[#E8A838]'
+                                : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-300'
+                            }`}
+                          >
+                            {feat.included ? <Check size={11} strokeWidth={2.5} /> : <X size={11} strokeWidth={2.5} />}
+                          </button>
+                          <input
+                            type="text"
+                            className={`${inputCls} flex-1`}
+                            value={feat.text}
+                            placeholder="Fonctionnalité..."
+                            onChange={e => updateTierFeature(ti, fi, 'text', e.target.value)}
+                          />
+                          <button
+                            onClick={() => removeTierFeature(ti, fi)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addTierFeature(ti)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-white/20 text-gray-500 dark:text-gray-400 hover:text-[#E8A838] hover:border-[#E8A838]/50 text-[13px] transition-colors"
+                      >
+                        <Plus size={13} />
+                        Ajouter une ligne
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </AccordionCard>
 

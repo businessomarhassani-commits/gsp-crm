@@ -13,6 +13,56 @@ import {
 
 const APP_URL = 'https://app.crm.archi'
 
+// ─── Default pricing tiers (overridden by DB if pricing|tiers exists) ─────────
+const DEFAULT_PRICING_TIERS = [
+  {
+    name: 'Starter',
+    price: '490',
+    currency: 'DH',
+    featured: false,
+    features: [
+      { text: 'CRM complet',         included: true  },
+      { text: "Jusqu'à 100 leads",   included: true  },
+      { text: 'Pipeline kanban',     included: true  },
+      { text: 'Rappels',             included: true  },
+      { text: 'Site web IA',         included: false },
+      { text: 'Meta Ads',            included: false },
+      { text: 'App desktop',         included: false },
+    ],
+  },
+  {
+    name: 'Pro',
+    price: '890',
+    currency: 'DH',
+    featured: true,
+    badge: 'Le plus populaire',
+    features: [
+      { text: 'CRM complet',           included: true  },
+      { text: 'Leads illimités',        included: true  },
+      { text: 'Pipeline kanban',        included: true  },
+      { text: 'Rappels',               included: true  },
+      { text: 'Site web IA (1 site)',   included: true  },
+      { text: 'Meta Ads',              included: true  },
+      { text: 'App desktop',           included: false },
+    ],
+  },
+  {
+    name: 'Premium',
+    price: '1490',
+    currency: 'DH',
+    featured: false,
+    features: [
+      { text: 'CRM complet',            included: true },
+      { text: 'Leads illimités',         included: true },
+      { text: 'Pipeline kanban',         included: true },
+      { text: 'Rappels',                included: true },
+      { text: 'Sites web IA (3 sites)', included: true },
+      { text: 'Meta Ads',               included: true },
+      { text: 'App desktop',            included: true },
+    ],
+  },
+]
+
 // ─── Scroll-fade hook ─────────────────────────────────────────────────────────
 function useFadeIn() {
   const ref = useRef(null)
@@ -251,6 +301,25 @@ function ProductPreview() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const [PRICING_TIERS, setPricingTiers] = useState(DEFAULT_PRICING_TIERS)
+
+  // Fetch pricing tiers from DB (falls back to defaults if unavailable)
+  useEffect(() => {
+    fetch('/api/public/landing-content')
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        if (!Array.isArray(rows)) return
+        const tiersRow = rows.find(r => r.section === 'pricing' && r.field === 'tiers')
+        if (tiersRow?.value) {
+          try {
+            const tiers = JSON.parse(tiersRow.value)
+            if (Array.isArray(tiers) && tiers.length > 0) setPricingTiers(tiers)
+          } catch { /* keep defaults */ }
+        }
+      })
+      .catch(() => { /* keep defaults */ })
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-[Inter,sans-serif] overflow-x-hidden">
       <NavBar />
@@ -446,83 +515,104 @@ export default function LandingPage() {
       <ProductPreview />
 
       {/* ── PRICING ──────────────────────────────────────────────────────────── */}
-      <section id="tarifs" className="py-16 sm:py-24 bg-white">
+      <section id="tarifs" className="py-16 sm:py-24 bg-[#FAFAFA]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <FadeIn className="text-center mb-12">
             <p className="text-[#E8A838] text-[12px] font-semibold uppercase tracking-widest mb-3">Tarifs</p>
             <h2 className="text-[28px] sm:text-[36px] font-bold text-gray-900 leading-tight">
-              Un tarif simple et transparent
+              Choisissez votre formule
             </h2>
             <p className="text-gray-400 text-[15px] mt-3">Pas de surprise, pas de frais cachés.</p>
           </FadeIn>
 
           <FadeIn delay={100}>
-            <div className="max-w-md mx-auto">
-              {/* Urgency text above card */}
-              <p className="text-center text-[13px] font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-xl py-2.5 px-4 mb-4">
-                Offre de lancement — Prix garanti pendant 12 mois
-              </p>
-
-              <div className="relative bg-[#0A0A0A] rounded-2xl border-2 border-[#E8A838] p-7 sm:p-8 shadow-2xl shadow-[#E8A838]/10">
-                {/* Badges row */}
-                <div className="flex items-center justify-center gap-2 mb-6">
-                  <span className="bg-[#E8A838] text-[#0A0A0A] text-xs font-bold px-3 py-1 rounded-full">Populaire</span>
-                  <span className="border border-[#E8A838]/40 text-[#E8A838] text-xs font-semibold px-3 py-1 rounded-full">30 jours gratuits</span>
-                </div>
-
-                <div className="text-center mb-2">
-                  <p className="text-white/40 text-[12px] uppercase tracking-widest font-semibold mb-4">Professionnel</p>
-                  <div className="flex items-end justify-center gap-2 mb-2">
-                    <span className="text-[64px] font-bold text-white leading-none">500</span>
-                    <div className="mb-2 text-left">
-                      <p className="text-[#E8A838] font-bold text-[18px] leading-none">DH</p>
-                      <p className="text-white/30 text-[12px] leading-tight">/ mois</p>
-                    </div>
-                  </div>
-                  <p className="text-white/35 text-[13px] mb-6">
-                    Soit moins de <span className="text-[#E8A838] font-semibold">17 DH par jour</span> pour ne plus perdre un seul lead.
-                  </p>
-                </div>
-
-                <ul className="space-y-3 mb-7">
-                  {[
-                    'Gestion illimitée des leads',
-                    'Pipeline Kanban',
-                    'Intégration Meta Ads',
-                    'Rappels automatiques',
-                    'Suivi financier',
-                    'Tableau de bord analytique',
-                    'Support WhatsApp',
-                  ].map(f => (
-                    <li key={f} className="flex items-center gap-3 text-[14px] text-white/75">
-                      <div className="w-5 h-5 rounded-full bg-[#E8A838]/15 flex items-center justify-center shrink-0">
-                        <Check size={11} className="text-[#E8A838]" strokeWidth={2.5} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-start">
+              {PRICING_TIERS.map((tier) => {
+                const isFeatured = !!tier.featured
+                return (
+                  <div
+                    key={tier.name}
+                    className={`relative rounded-2xl p-7 flex flex-col transition-all ${
+                      isFeatured
+                        ? 'bg-[#0A0A0A] border-2 border-[#E8A838] shadow-2xl shadow-[#E8A838]/10 md:-mt-4 md:mb-4'
+                        : 'bg-white border border-gray-200 shadow-sm'
+                    }`}
+                  >
+                    {/* "Le plus populaire" badge */}
+                    {isFeatured && tier.badge && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                        <span className="bg-[#E8A838] text-[#0A0A0A] text-[11px] font-bold px-4 py-1 rounded-full whitespace-nowrap shadow-lg">
+                          {tier.badge}
+                        </span>
                       </div>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+                    )}
 
-                <a href={`${APP_URL}/signup`}
-                  className="block w-full text-center bg-[#E8A838] hover:bg-[#d4952a] active:scale-95 text-[#0A0A0A] font-bold text-[15px] py-3.5 rounded-xl transition-all shadow-lg shadow-[#E8A838]/20">
-                  Commencer l'essai gratuit
-                </a>
+                    {/* Plan name */}
+                    <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 ${isFeatured ? 'text-white/40' : 'text-gray-400'}`}>
+                      {tier.name}
+                    </p>
 
-                <p className="text-center text-white/25 text-[12px] mt-3">
-                  Aucune carte bancaire requise. Annulez à tout moment.
-                </p>
+                    {/* Price */}
+                    <div className="flex items-end gap-1.5 mb-6">
+                      <span className={`text-[52px] font-bold leading-none ${isFeatured ? 'text-white' : 'text-gray-900'}`}>
+                        {tier.price}
+                      </span>
+                      <div className="mb-1.5">
+                        <p className={`font-bold text-[15px] leading-none ${isFeatured ? 'text-[#E8A838]' : 'text-[#E8A838]'}`}>
+                          {tier.currency}
+                        </p>
+                        <p className={`text-[12px] leading-tight ${isFeatured ? 'text-white/30' : 'text-gray-400'}`}>
+                          / mois
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Trust checks */}
-                <div className="flex items-center justify-center gap-4 mt-4 flex-wrap">
-                  {['Sans engagement', 'Résiliable à tout moment', 'Données sécurisées'].map(t => (
-                    <span key={t} className="flex items-center gap-1 text-[11px] text-white/30">
-                      <Check size={10} className="text-[#E8A838]/60" strokeWidth={2.5} />
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                    {/* Features */}
+                    <ul className="space-y-2.5 mb-7 flex-1">
+                      {tier.features.map((feat) => (
+                        <li key={feat.text} className={`flex items-center gap-2.5 text-[13px] ${
+                          feat.included
+                            ? (isFeatured ? 'text-white/80' : 'text-gray-700')
+                            : (isFeatured ? 'text-white/25' : 'text-gray-300')
+                        }`}>
+                          {feat.included ? (
+                            <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 ${isFeatured ? 'bg-[#E8A838]/15' : 'bg-[#E8A838]/10'}`}>
+                              <Check size={10} className="text-[#E8A838]" strokeWidth={2.5} />
+                            </div>
+                          ) : (
+                            <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 ${isFeatured ? 'bg-white/5' : 'bg-gray-100'}`}>
+                              <X size={10} className={isFeatured ? 'text-white/20' : 'text-gray-300'} strokeWidth={2.5} />
+                            </div>
+                          )}
+                          {feat.text}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA */}
+                    <a
+                      href={`${APP_URL}/register`}
+                      className={`block w-full text-center font-bold text-[14px] py-3 rounded-xl transition-all active:scale-95 ${
+                        isFeatured
+                          ? 'bg-[#E8A838] hover:bg-[#d4952a] text-[#0A0A0A] shadow-lg shadow-[#E8A838]/20'
+                          : 'bg-gray-900 hover:bg-gray-700 text-white'
+                      }`}
+                    >
+                      Commencer
+                    </a>
+                  </div>
+                )
+              })}
             </div>
+
+            {/* Trust line */}
+            <p className="text-center text-gray-400 text-[13px] mt-6 flex items-center justify-center gap-2">
+              <Check size={13} className="text-[#E8A838]" strokeWidth={2.5} />
+              Sans engagement
+              <span className="text-gray-300 mx-1">·</span>
+              <Check size={13} className="text-[#E8A838]" strokeWidth={2.5} />
+              Support WhatsApp inclus
+            </p>
           </FadeIn>
         </div>
       </section>
