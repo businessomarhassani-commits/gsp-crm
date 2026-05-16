@@ -589,6 +589,12 @@ async function _generateContent() {
       }),
     })
 
+    // Surface HTTP errors so they appear in the output panel instead of silently failing
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}))
+      throw new Error(errJson.error || `Erreur HTTP ${response.status}`)
+    }
+
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let fullText = ''
