@@ -321,7 +321,7 @@ export default function AdminTeam() {
                 required
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="membre@archicrm.ma"
+                placeholder="membre@crm.archi"
                 className="w-full border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-white/[0.03] text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-[#E8A838]/30 focus:border-[#E8A838]/60"
               />
             </div>

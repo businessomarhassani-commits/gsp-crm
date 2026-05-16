@@ -105,8 +105,6 @@ export function AuthProvider({ children }) {
     // Fallback if window.close() doesn't work — go to admin subdomain
     const adminBase = window.location.hostname === 'app.crm.archi'
       ? 'https://admin.crm.archi'
-      : window.location.hostname === 'app.archicrm.ma'
-      ? 'https://admin.archicrm.ma'
       : ''
     setTimeout(() => { window.location.href = `${adminBase}/users` }, 200)
   }

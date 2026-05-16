@@ -24,6 +24,7 @@ import AdminLandingEditor from './pages/AdminLandingEditor'
 import Integrations from './pages/Integrations'
 import UserSettings from './pages/UserSettings'
 import Sites from './pages/Sites'
+import AgencyAI from './pages/AgencyAI'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import LandingPage from './pages/LandingPage'
@@ -33,9 +34,9 @@ import DesktopSetup from './pages/DesktopSetup'
 // ── Detect which app to render based on hostname ─────────────────────────────
 function getAppMode() {
   const h = window.location.hostname
-  if (h === 'admin.archicrm.ma' || h === 'admin.crm.archi') return 'admin'
-  if (h === 'archicrm.ma' || h === 'www.archicrm.ma' || h === 'crm.archi' || h === 'www.crm.archi') return 'landing'
-  if (h === 'app.archicrm.ma' || h === 'app.crm.archi') return 'crm'
+  if (h === 'admin.crm.archi') return 'admin'
+  if (h === 'crm.archi' || h === 'www.crm.archi') return 'landing'
+  if (h === 'app.crm.archi') return 'crm'
   // localhost / dev — default to CRM so developers can work on it
   return 'crm'
 }
@@ -50,7 +51,7 @@ function Loader({ dark = false }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 1. LANDING APP  (archicrm.ma / www.archicrm.ma)
+// 1. LANDING APP  (crm.archi / www.crm.archi)
 // ────────────────────────────────────────────────────────────────────────────
 function LandingAppRoutes() {
   return (
@@ -69,7 +70,7 @@ function LandingAppRoutes() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 2. CRM APP  (app.archicrm.ma / localhost)
+// 2. CRM APP  (app.crm.archi / localhost)
 // ────────────────────────────────────────────────────────────────────────────
 
 // Protects CRM pages — unauthenticated → back to login (/)
@@ -117,6 +118,7 @@ function CRMAppRoutes() {
       <Route path="/integrations" element={<CRMRoute><Integrations /></CRMRoute>} />
       <Route path="/settings"    element={<CRMRoute><UserSettings /></CRMRoute>} />
       <Route path="/sites"       element={<CRMRoute adminOnly><Sites /></CRMRoute>} />
+      <Route path="/agency-ai"   element={<CRMRoute adminOnly><AgencyAI /></CRMRoute>} />
 
       {/* Public pages also available inside CRM subdomain */}
       <Route path="/privacy"  element={<Privacy />} />
@@ -132,7 +134,7 @@ function CRMAppRoutes() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 3. ADMIN APP  (admin.archicrm.ma)
+// 3. ADMIN APP  (admin.crm.archi)
 // ────────────────────────────────────────────────────────────────────────────
 function AdminRoute({ children, requireSuperAdmin = false, requirePermission = null }) {
   const { admin, token, loading } = useAdminAuth()

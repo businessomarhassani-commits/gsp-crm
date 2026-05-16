@@ -16,7 +16,7 @@ INSERT INTO public.landing_content (section, field, value) VALUES
 ('hero', 'title', 'Arrêtez de perdre\nvos leads.'),
 ('hero', 'subtitle', 'ArchiCRM transforme chaque prospect en client. Conçu exclusivement pour les cabinets d''architecture marocains.'),
 ('hero', 'button_primary_text', 'Commencer gratuitement'),
-('hero', 'button_primary_link', 'https://app.archicrm.ma/signup'),
+('hero', 'button_primary_link', 'https://app.crm.archi/signup'),
 ('hero', 'button_secondary_text', 'Voir la démo'),
 ('hero', 'badge_urgency', 'Offre de lancement — 30 jours gratuits'),
 -- FEATURES

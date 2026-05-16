@@ -109,8 +109,8 @@ export default function Privacy() {
             </p>
             <p>
               <strong className="text-gray-700 dark:text-gray-300">Email :</strong>{' '}
-              <a href="mailto:admin@archicrm.ma" className="text-[#C9A84C] hover:underline">
-                admin@archicrm.ma
+              <a href="mailto:admin@crm.archi" className="text-[#C9A84C] hover:underline">
+                admin@crm.archi
               </a>
             </p>
           </Section>

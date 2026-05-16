@@ -11,6 +11,7 @@ import {
   Bell,
   DollarSign,
   Globe,
+  Sparkles,
   Settings,
   LogOut,
   Sun,
@@ -33,6 +34,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { to: '/reminders',  label: 'Rappels',           Icon: Bell },
     { to: '/finance',    label: 'Finance',           Icon: DollarSign },
     ...(isAdmin ? [{ to: '/sites', label: 'Sites Web', Icon: Globe }] : []),
+    ...(isAdmin ? [{ to: '/agency-ai', label: 'Agency AI', Icon: Sparkles }] : []),
     { to: '/settings',   label: 'Paramètres',        Icon: Settings },
   ]
 

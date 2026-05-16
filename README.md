@@ -62,10 +62,10 @@ Backend : http://localhost:3001
 
 | Email | Mot de passe | Rôle |
 |-------|-------------|------|
-| admin@archicrm.ma | Admin2024! | admin |
-| karim@archicrm.ma | User2024! | user |
-| sara@archicrm.ma | User2024! | user |
-| youssef@archicrm.ma | User2024! | user |
+| admin@crm.archi | Admin2024! | admin |
+| karim@crm.archi | User2024! | user |
+| sara@crm.archi | User2024! | user |
+| youssef@crm.archi | User2024! | user |
 
 ## Déploiement Vercel
 

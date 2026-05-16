@@ -103,8 +103,6 @@ export default function AdminUsers() {
       // Open CRM app on the app subdomain (or same host in local dev)
       const crmBase = window.location.hostname === 'admin.crm.archi'
         ? 'https://app.crm.archi'
-        : window.location.hostname === 'admin.archicrm.ma'
-        ? 'https://app.archicrm.ma'
         : ''
       window.open(`${crmBase}/?impersonate=${encodeURIComponent(data.token)}`, '_blank')
     } catch (err) {

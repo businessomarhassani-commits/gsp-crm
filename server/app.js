@@ -35,14 +35,12 @@ app.use(express.json({
 }))
 
 // ── Wildcard subdomain routing — MUST be before all API routes ────────────────
-// Handles {slug}.crm.archi and {slug}.archicrm.ma → serves architect site HTML from Supabase
+// Handles {slug}.crm.archi → serves architect site HTML from Supabase
 app.use(async (req, res, next) => {
   const host = req.headers.host || ''
 
-  // Match *.crm.archi or *.archicrm.ma
-  const matchNew = host.match(/^([^.]+)\.crm\.archi(?::\d+)?$/)
-  const matchOld = host.match(/^([^.]+)\.archicrm\.ma(?::\d+)?$/)
-  const match = matchNew || matchOld
+  // Match *.crm.archi
+  const match = host.match(/^([^.]+)\.crm\.archi(?::\d+)?$/)
   if (!match) return next()
 
   const subdomain = match[1]

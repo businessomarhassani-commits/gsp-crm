@@ -65,7 +65,7 @@ export default function AdminLogin() {
                 onChange={e => set('email', e.target.value)}
                 required
                 autoFocus
-                placeholder="admin@archicrm.ma"
+                placeholder="admin@crm.archi"
                 className="w-full bg-white/[0.06] border border-white/[0.10] rounded-xl px-4 py-3 text-white text-[13px] placeholder-white/20 focus:outline-none focus:border-[#E8A838]/60 focus:bg-white/[0.08] transition-colors"
               />
             </div>

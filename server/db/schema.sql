@@ -93,15 +93,15 @@ CREATE TABLE history (
 -- SEED DATA  (passwords hashed with pgcrypto bcrypt)
 -- ============================================================
 INSERT INTO users (name, email, password, role) VALUES
-  ('Admin Système',   'admin@archicrm.ma',   crypt('Admin2024!',  gen_salt('bf', 12)), 'admin'),
-  ('Karim Benali',    'karim@archicrm.ma',   crypt('User2024!',   gen_salt('bf', 12)), 'user'),
-  ('Sara Alami',      'sara@archicrm.ma',    crypt('User2024!',   gen_salt('bf', 12)), 'user'),
-  ('Youssef Chaoui',  'youssef@archicrm.ma', crypt('User2024!',   gen_salt('bf', 12)), 'user');
+  ('Admin Système',   'admin@crm.archi',   crypt('Admin2024!',  gen_salt('bf', 12)), 'admin'),
+  ('Karim Benali',    'karim@crm.archi',   crypt('User2024!',   gen_salt('bf', 12)), 'user'),
+  ('Sara Alami',      'sara@crm.archi',    crypt('User2024!',   gen_salt('bf', 12)), 'user'),
+  ('Youssef Chaoui',  'youssef@crm.archi', crypt('User2024!',   gen_salt('bf', 12)), 'user');
 
 -- Seed leads for Karim
 DO $$
 DECLARE
-  karim_id UUID := (SELECT id FROM users WHERE email = 'karim@archicrm.ma');
+  karim_id UUID := (SELECT id FROM users WHERE email = 'karim@crm.archi');
   lead1 UUID; lead2 UUID; lead3 UUID; lead4 UUID; lead5 UUID; lead6 UUID;
   client1 UUID;
 BEGIN
@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- Seed leads for Sara
 DO $$
 DECLARE
-  sara_id UUID := (SELECT id FROM users WHERE email = 'sara@archicrm.ma');
+  sara_id UUID := (SELECT id FROM users WHERE email = 'sara@crm.archi');
   lead1 UUID; client1 UUID;
 BEGIN
   INSERT INTO leads (user_id, name, phone, email, project_type, city, budget, status, source)

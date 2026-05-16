@@ -15,8 +15,6 @@ const Router = isElectron ? HashRouter : BrowserRouter
 // Must run BEFORE React mounts. If the current hostname is a published architect
 // site (e.g. aziz-hassani.crm.archi), fetch its HTML and replace the document.
 const RESERVED = [
-  'archicrm.ma', 'www.archicrm.ma',
-  'app.archicrm.ma', 'admin.archicrm.ma',
   'crm.archi', 'www.crm.archi',
   'app.crm.archi', 'admin.crm.archi',
   'localhost',
@@ -51,14 +49,12 @@ const NOT_FOUND_HTML = `<!DOCTYPE html>
 const hostname = window.location.hostname
 const isArchitectSite =
   !RESERVED.includes(hostname) &&
-  (hostname.endsWith('.archicrm.ma') || hostname.endsWith('.crm.archi')) &&
+  hostname.endsWith('.crm.archi') &&
   hostname.split('.').length === 3  // exactly one subdomain level
 
 if (isArchitectSite) {
   // Extract slug and requested type from URL
-  const slug = hostname.endsWith('.crm.archi')
-    ? hostname.replace('.crm.archi', '')
-    : hostname.replace('.archicrm.ma', '')
+  const slug = hostname.replace('.crm.archi', '')
   const type = window.location.pathname === '/landing' ? 'landing' : 'vitrine'
 
   // Show a minimal loading screen immediately (before the fetch resolves)
