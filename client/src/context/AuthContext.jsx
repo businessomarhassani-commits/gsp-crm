@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
     if (stored) {
       // ── Guard: reject admin tokens on the user CRM ────────────────────────
       const decoded = decodeJwt(stored)
-      if (decoded?.adminUserId || decoded?.role === 'superadmin') {
+      // Reject admin-panel impersonation tokens (identified by adminUserId in payload)
+      if (decoded?.adminUserId) {
         clearAllAuth()
         setAuthError('invalid_admin_token')
         setLoading(false)
@@ -56,12 +57,6 @@ export function AuthProvider({ children }) {
       api.get('/api/auth/me')
         .then(res => {
           const userData = res.data
-          // Double-check: server should never return an admin user here
-          if (userData?.role === 'superadmin') {
-            clearAllAuth()
-            setAuthError('invalid_admin_token')
-            return
-          }
           setUser(userData)
           setToken(stored)
           setIsImpersonating(!!impToken)
