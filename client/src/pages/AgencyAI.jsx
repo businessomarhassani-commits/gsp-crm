@@ -659,10 +659,10 @@ function _closeOutput() {
 
 // ── Component ─────────────────────────────────────────────────────────────
 export default function AgencyAI() {
-  const { user } = useAuth()
+  const { user, isImpersonating } = useAuth()
 
-  // Superadmin guard
-  if (user && user.role !== 'superadmin' && user.role !== 'admin') {
+  // Guard: allow superadmin, admin, and impersonation sessions; block regular users
+  if (user && user.role !== 'superadmin' && user.role !== 'admin' && !isImpersonating) {
     return <Navigate to="/dashboard" replace />
   }
 
