@@ -17,6 +17,7 @@ const webhookRoutes = require('./routes/webhook')
 const landingContentRoutes = require('./routes/landingContent')
 const sitesRoutes = require('./routes/sites')
 const downloadRoutes = require('./routes/download')
+const aiGenerateRoutes = require('./routes/aiGenerate')
 const { apiKeyAuth: _unused } = require('./middleware/auth') // kept for potential future use
 
 const app = express()
@@ -133,6 +134,7 @@ app.use('/api/webhook', webhookRoutes)
 app.use('/api', landingContentRoutes)
 app.use('/api/sites', sitesRoutes)
 app.use('/api/download', downloadRoutes)
+app.use('/api/ai', aiGenerateRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'ArchiCRM' }))

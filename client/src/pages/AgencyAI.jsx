@@ -570,12 +570,19 @@ async function _generateContent() {
   if (outputEl) outputEl.appendChild(cursor)
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Read JWT from storage (impersonation token takes priority)
+    const _token =
+      sessionStorage.getItem('archicrm_impersonation_token') ||
+      localStorage.getItem('archicrm_token') ||
+      ''
+
+    const response = await fetch('/api/ai/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_token}`,
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
         stream: true,
         system: 'You are an expert marketing strategist and copywriter for professional service agencies in Morocco. You deliver precise, actionable, market-specific output. No filler, no generic advice.',
         messages: [{ role: 'user', content: prompt }],
@@ -623,7 +630,7 @@ async function _generateContent() {
   } catch (err) {
     cursor.remove()
     if (outputEl) {
-      outputEl.textContent = 'Error: ' + err.message + '\n\nMake sure you are using this app inside Claude.ai where the API is available.'
+      outputEl.textContent = 'Erreur: ' + err.message + '\n\nVérifiez votre connexion et réessayez.'
     }
   }
 
